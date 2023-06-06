@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,18 +7,25 @@
 #include <limits.h>
 #include <dirent.h>
 
-#ifdef DEBUG
-#include <assert.h>
-#define ASSERT(p) assert((p))
+/* NOTE: i have no clue if this works on windows */
+#ifdef __WIN32
+#define PATH_SEPARATOR ";"
 #else
-#define ASSERT(_)
+#define PATH_SEPARATOR ":"
 #endif
+
+struct tag {
+    char *name;
+    size_t position;
+    size_t length;
+};
+
+typedef struct tag tagged_list;
 
 bool matches_pattern(const char *fname,
                      const char *pattern,
                      size_t pattern_len) {
     const size_t fname_len = strlen(fname);
-    size_t idx;
     uint64_t packed_fname = fname[0];
     uint64_t packed_pattern = pattern[0];
 
@@ -40,9 +48,10 @@ bool matches_pattern(const char *fname,
         /* fall through */
     case 1:
         return packed_fname == packed_pattern;
-    default:
+    default: {
         /* TODO: apply the above compression technique for the loop, hopefully
          * outside of the switch */
+        size_t idx;
         for (idx = 0; idx < pattern_len; idx++) {
             if (pattern[idx] != fname[idx]) {
                 return false;
@@ -50,6 +59,7 @@ bool matches_pattern(const char *fname,
         }
 
         return true;
+    }
     }
 }
 
@@ -59,14 +69,17 @@ int add_to_matchlist(char ***matches_list, size_t matches_len, char *filename) {
     size_t filename_len = strlen(filename);
     char *buffer_fname = NULL;
 
-    char **matches_resize = realloc(*matches_list,
-            sizeof(*matches_list) * (matches_len + 1));
+    char **matches_resize =
+        realloc(*matches_list, sizeof(*matches_list) * (matches_len + 1));
     if (matches_resize == NULL) {
+        fprintf(stderr, "failed to resize list of matches\n");
         return -1;
     }
 
     buffer_fname = malloc(filename_len + 1);
     if (buffer_fname == NULL) {
+        fprintf(stderr, "failed to allocate buffer for string\n");
+        free(matches_resize);
         return -1;
     }
 
@@ -98,7 +111,8 @@ int update_matches(const char *path,
             num_matches =
                 add_to_matchlist(matches_list, num_matches, entry->d_name);
             if (num_matches < 0) {
-                break;
+                closedir(dir);
+                return -1;
             }
         }
     }
@@ -107,17 +121,110 @@ int update_matches(const char *path,
     return num_matches;
 }
 
-int main(int argc, char *argv[]) {
-    char *env_path = NULL;
-    char *path = NULL, *remaining = NULL;
+tagged_list *add_tag(tagged_list *tags,
+                     size_t new_size,
+                     char *name,
+                     size_t pos) {
+    size_t idx = new_size - 1;
+    size_t name_len = strlen(name);
+    tags = realloc(tags, sizeof(*tags) * new_size);
 
-    char **matches = NULL;
+    if (tags == NULL) {
+        return NULL;
+    }
+
+    tags[idx].name = malloc(name_len + 1);
+    if (name == NULL) {
+        free(tags);
+        return NULL;
+    }
+
+    memcpy(tags[idx].name, name, name_len);
+    tags[idx].name[name_len] = '\0';
+
+    tags[idx].position = pos;
+    tags[idx].length = 0;
+
+    return tags;
+}
+
+void dump_tags(tagged_list *tags, char **elems, const size_t count) {
+    struct tag *it;
+
+    for (it = tags; it < &tags[count]; it++) {
+        size_t idx = 0;
+        /* when no matches in tag, length == position */
+        for (idx = it->position; idx < it->length; idx++) {
+            printf("%s/%s\n", it->name, elems[idx]);
+            free(elems[idx]);
+        }
+
+        free(it->name);
+    }
+
+    free(tags);
+    free(elems);
+}
+
+/* TODO: make this simpler */
+void free_tags_in_list(tagged_list *tags, char **elems, const size_t count) {
+    struct tag *it;
+
+    for (it = tags; it < &tags[count]; it++) {
+        size_t idx = 0;
+        for (idx = it->position; idx < it->length; idx++) {
+            free(elems[idx]);
+        }
+        free(it->name);
+    }
+    free(tags);
+    free(elems);
+}
+
+int tag_each_match(char *env_path,
+                   const char *pattern,
+                   char ***matches,
+                   tagged_list **tags) {
+    char *path, *remaining;
+    size_t pattern_len = strlen(pattern);
+
+    size_t num_tags = 0;
     int num_matches = 0;
 
-    char *pattern = NULL;
-    size_t pattern_len = 0;
+    path = strtok_r(env_path, PATH_SEPARATOR, &remaining);
+    while (path != NULL) {
+        tagged_list *resized_tags =
+            add_tag(*tags, num_tags + 1, path, num_matches);
+        if (resized_tags == NULL) {
+            fprintf(stderr, "failed to reallocate list");
+            free(*matches);
+            *matches = NULL;
+            return num_tags;
+        }
 
-    int idx;
+        num_matches =
+            update_matches(path, pattern, pattern_len, matches, num_matches);
+        if (num_matches < 0) {
+            free(*matches);
+            *matches = NULL;
+            return num_tags;
+        }
+
+        resized_tags[num_tags++].length = num_matches;
+        *tags = resized_tags;
+        path = strtok_r(NULL, PATH_SEPARATOR, &remaining);
+    }
+
+    return num_tags;
+}
+
+int main(int argc, char *argv[]) {
+    char *env_path = NULL;
+
+    int num_tags = 0;
+    tagged_list *tags = NULL;
+
+    char **matches = NULL;
 
     if (argc < 2) {
         fprintf(stderr, "%s requires an argument [pattern]\n", argv[0]);
@@ -130,27 +237,11 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    pattern = argv[1];
-    pattern_len = strlen(pattern);
-
-    /* TODO: make multiple thread workers to retrieve the list of matches */
-    path = strtok_r(env_path, ":", &remaining);
-    while (path != NULL) {
-        /* TODO: make regex support (-R? -E?) */
-        num_matches =
-            update_matches(path, pattern, pattern_len, &matches, num_matches);
-        path = strtok_r(NULL, ":", &remaining);
+    num_tags = tag_each_match(env_path, argv[1], &matches, &tags);
+    if (matches == NULL) {
+        free_tags_in_list(tags, matches, num_tags);
+        return EXIT_FAILURE;
     }
-
-    /* FIXME: if num_matches < 0, this won't be freed better use a separate
-     * counter for errors or find another method for errors */
-    /* NOTE: this separate counter could be used to accomplish geometric
-     * resize */
-    for (idx = 0; idx < num_matches; idx++) {
-        puts(matches[idx]);
-        free(matches[idx]);
-    }
-
-    free(matches);
+    dump_tags(tags, matches, num_tags);
     return EXIT_SUCCESS;
 }
