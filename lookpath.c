@@ -20,7 +20,77 @@ struct tag {
     size_t length;
 };
 
-typedef struct tag tagged_list;
+/* TODO: */
+typedef struct {
+    struct tag *tags;
+    char **strings;
+
+    size_t num_strings;
+    size_t num_tags;
+} tagged_list;
+
+enum error {
+    FAILED_BUFFER_ALLOC = INT_MIN,
+    FAILED_BUFFER_REALLOC,
+    NO_PATH_VAR,
+    EMPTY_PATH_VAR,
+    INSUFFICIENT_ARGS,
+    WRONG_ARGS,
+    DOUBLE_PATTERN,
+    NO_PATTERN,
+
+    NO_ERROR = 0
+};
+
+enum print_mode {
+    SORTED,
+    FULL_PATH,
+    FULL_PATH_SORTED, /* maybe */
+    TREE
+};
+
+#define FLAG_SORTED "-S"
+#define FLAG_FULL_PATH "-f"
+#define FLAG_FULL_PATH_SORTED "-F"
+#define FLAG_TREE "-t"
+
+typedef struct {
+    enum print_mode print_mode;
+    char *pattern;
+} settings_t;
+
+void what_happened(enum error code) {
+    switch (code) {
+    case FAILED_BUFFER_ALLOC:
+        perror("issue with malloc");
+        fprintf(stderr, "failed to allocate buffer\n");
+        break;
+    case FAILED_BUFFER_REALLOC:
+        perror("issue with realloc");
+        fprintf(stderr, "failed to reallocate buffer\n");
+        break;
+    case NO_PATH_VAR:
+        fprintf(stderr, "PATH variable not set, quitting\n");
+        break;
+    case EMPTY_PATH_VAR:
+        fprintf(stderr, "PATH is empty string, qutting\n");
+        break;
+    case INSUFFICIENT_ARGS:
+        fprintf(stderr, "requires a 1 argument [pattern]\n");
+        break;
+    case WRONG_ARGS:
+        fprintf(stderr, "mismatched or invalid argument provided, quitting\n");
+        break;
+    case DOUBLE_PATTERN:
+        fprintf(stderr, "can only take one pattern, quitting\n");
+        break;
+    case NO_PATTERN:
+        fprintf(stderr, "no pattern provided in arguments");
+        break;
+    default:
+        break;
+    }
+}
 
 bool matches_pattern(const char *fname,
                      const char *pattern,
@@ -72,18 +142,17 @@ int add_to_matchlist(char ***matches_list, size_t matches_len, char *filename) {
     char **matches_resize =
         realloc(*matches_list, sizeof(*matches_list) * (matches_len + 1));
     if (matches_resize == NULL) {
-        fprintf(stderr, "failed to resize list of matches\n");
-        return -1;
+        return FAILED_BUFFER_REALLOC;
     }
 
-    buffer_fname = malloc(filename_len + 1);
+    buffer_fname = calloc(1, NAME_MAX + 1);
     if (buffer_fname == NULL) {
-        fprintf(stderr, "failed to allocate buffer for string\n");
         free(matches_resize);
-        return -1;
+        return FAILED_BUFFER_ALLOC;
     }
 
     /* set the buffer_fname to filename */
+    /* TODO: look into strdup(3) */
     memcpy(buffer_fname, filename, filename_len);
     buffer_fname[filename_len] = '\0';
 
@@ -108,12 +177,14 @@ int update_matches(const char *path,
 
     while ((entry = readdir(dir))) {
         if (matches_pattern(entry->d_name, pattern, pattern_len)) {
-            num_matches =
+            int result =
                 add_to_matchlist(matches_list, num_matches, entry->d_name);
             if (num_matches < 0) {
                 closedir(dir);
-                return -1;
+                return result;
             }
+
+            num_matches = result;
         }
     }
     closedir(dir);
@@ -121,127 +192,208 @@ int update_matches(const char *path,
     return num_matches;
 }
 
-tagged_list *add_tag(tagged_list *tags,
-                     size_t new_size,
+tagged_list *add_tag(tagged_list *ts,
                      char *name,
-                     size_t pos) {
-    size_t idx = new_size - 1;
+                     size_t position,
+                     size_t length) {
+    struct tag *new_tag = NULL;
+    struct tag *realloc_tags = NULL;
     size_t name_len = strlen(name);
-    tags = realloc(tags, sizeof(*tags) * new_size);
 
-    if (tags == NULL) {
+    realloc_tags =
+        realloc(ts->tags, sizeof(*ts->tags) * (ts->num_tags + 1));
+    if (realloc_tags == NULL) {
+        return NULL;
+    }
+    ts->tags = realloc_tags;
+    new_tag = &realloc_tags[ts->num_tags];
+
+    new_tag->name = malloc(name_len + 1);
+    if (new_tag->name == NULL) {
+        free(ts->tags);
         return NULL;
     }
 
-    tags[idx].name = malloc(name_len + 1);
-    if (name == NULL) {
-        free(tags);
-        return NULL;
-    }
+    memcpy(new_tag->name, name, name_len);
+    new_tag->name[name_len] = '\0';
 
-    memcpy(tags[idx].name, name, name_len);
-    tags[idx].name[name_len] = '\0';
+    new_tag->position = position;
+    new_tag->length = length;
+    ts->num_tags++;
 
-    tags[idx].position = pos;
-    tags[idx].length = 0;
-
-    return tags;
+    return ts;
 }
 
-void dump_tags(tagged_list *tags, char **elems, const size_t count) {
+void dump_tags(const settings_t *settings,
+                tagged_list *tags) {
     struct tag *it;
 
-    for (it = tags; it < &tags[count]; it++) {
+    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
         size_t idx = 0;
+
         /* when no matches in tag, length == position */
         for (idx = it->position; idx < it->length; idx++) {
-            printf("%s/%s\n", it->name, elems[idx]);
-            free(elems[idx]);
+            printf("%s/%s\n", it->name, tags->strings[idx]);
+            free(tags->strings[idx]);
         }
 
         free(it->name);
     }
 
-    free(tags);
-    free(elems);
+    free(tags->tags);
+    free(tags->strings);
+    (void) settings;
 }
 
-/* TODO: make this simpler */
-void free_tags_in_list(tagged_list *tags, char **elems, const size_t count) {
-    struct tag *it;
+int parse_arguments(settings_t *settings, int argc, char **argv) {
+    const size_t flag_cap = 2;
 
-    for (it = tags; it < &tags[count]; it++) {
-        size_t idx = 0;
-        for (idx = it->position; idx < it->length; idx++) {
-            free(elems[idx]);
+    int idx;
+    for (idx = 1; idx < argc; idx++) {
+        if (argv[idx][0] != '-') {
+            if (settings->pattern != NULL) {
+                return DOUBLE_PATTERN;
+            }
+            settings->pattern = argv[idx];
+            continue;
         }
-        free(it->name);
+
+        if (strncmp(argv[idx], FLAG_SORTED, flag_cap) == 0) {
+            settings->print_mode = SORTED;
+            continue;
+        }
+
+        if (strncmp(argv[idx], FLAG_FULL_PATH, flag_cap) == 0) {
+            settings->print_mode = FULL_PATH;
+            continue;
+        }
+
+        if (strncmp(argv[idx], FLAG_FULL_PATH_SORTED, flag_cap) == 0) {
+            settings->print_mode = FULL_PATH_SORTED;
+            continue;
+        }
+
+        if (strncmp(argv[idx], FLAG_TREE, flag_cap) == 0) {
+            settings->print_mode = TREE;
+            continue;
+        }
+
+        return WRONG_ARGS;
     }
-    free(tags);
-    free(elems);
+
+    if (settings->pattern == NULL) {
+        return NO_PATTERN;
+    }
+
+    return NO_ERROR;
+}
+
+void free_tags(tagged_list *tags) {
+    size_t idx;
+    for (idx = 0; idx < tags->num_strings; idx++) {
+        free(tags->strings[idx]);
+    }
+    for (idx = 0; idx < tags->num_tags; idx++) {
+        free(tags->tags[idx].name);
+    }
+    free(tags->tags);
+    free(tags->strings);
 }
 
 int tag_each_match(char *env_path,
                    const char *pattern,
-                   char ***matches,
-                   tagged_list **tags) {
+                   tagged_list *tags) {
     char *path, *remaining;
     size_t pattern_len = strlen(pattern);
 
     size_t num_tags = 0;
     int num_matches = 0;
 
-    path = strtok_r(env_path, PATH_SEPARATOR, &remaining);
-    while (path != NULL) {
-        tagged_list *resized_tags =
-            add_tag(*tags, num_tags + 1, path, num_matches);
+    for (
+            path = strtok_r(env_path, PATH_SEPARATOR, &remaining);
+            path != NULL;
+            path = strtok_r(NULL, PATH_SEPARATOR, &remaining)
+    ) {
+        int result = 0;
+        tagged_list *resized_tags = NULL;
+
+        /* TODO: better name for result */
+        result =
+            update_matches(path, pattern, pattern_len, &tags->strings, num_matches);
+        if (result < 0) {
+            free_tags(tags);
+            return result;
+        }
+
+        resized_tags = add_tag(tags, path, num_matches, result);
         if (resized_tags == NULL) {
-            fprintf(stderr, "failed to reallocate list");
-            free(*matches);
-            *matches = NULL;
-            return num_tags;
+            free_tags(tags);
+            return FAILED_BUFFER_REALLOC;
         }
-
-        num_matches =
-            update_matches(path, pattern, pattern_len, matches, num_matches);
-        if (num_matches < 0) {
-            free(*matches);
-            *matches = NULL;
-            return num_tags;
-        }
-
-        resized_tags[num_tags++].length = num_matches;
-        *tags = resized_tags;
-        path = strtok_r(NULL, PATH_SEPARATOR, &remaining);
+        tags = resized_tags;
+        tags->num_strings = result;
+        num_matches = result;
     }
 
     return num_tags;
 }
 
+int compare(const void *a, const void *b) {
+    return strncmp(*((const char **) a), *((const char **) b), NAME_MAX);
+}
+
 int main(int argc, char *argv[]) {
+    /* hold's the user's settings determined by program flags,
+     * parse_arguments() */
+    settings_t settings = {0};
+
+    /* points to the $PATH environment variable */
     char *env_path = NULL;
 
-    int num_tags = 0;
-    tagged_list *tags = NULL;
+    /* stores the result for error functions */
+    int res;
 
-    char **matches = NULL;
+    /*
+     * tags.tags: the pointer to the list of tags
+     * tags.num_tags: the number of tags in tags.tags
+     * tags.strings: the pointer to the tagged list
+     * tags.num_strings: the number of strings
+     */
+    tagged_list tags = {0};
 
     if (argc < 2) {
-        fprintf(stderr, "%s requires an argument [pattern]\n", argv[0]);
+        what_happened(INSUFFICIENT_ARGS);
         return EXIT_FAILURE;
     }
 
     env_path = getenv("PATH");
     if (env_path == NULL) {
-        fprintf(stderr, "PATH variable not set, quitting\n");
+        what_happened(NO_PATH_VAR);
+        return EXIT_FAILURE;
+    }
+    if (strlen(env_path) == 0) {
+        what_happened(EMPTY_PATH_VAR);
         return EXIT_FAILURE;
     }
 
-    num_tags = tag_each_match(env_path, argv[1], &matches, &tags);
-    if (matches == NULL) {
-        free_tags_in_list(tags, matches, num_tags);
+    if ((res = parse_arguments(&settings, argc, argv)) != NO_ERROR
+        || (res = tag_each_match(env_path, settings.pattern, &tags)) != NO_ERROR) {
+        /* TODO: check if mem leaks here */
+        what_happened(res);
         return EXIT_FAILURE;
     }
-    dump_tags(tags, matches, num_tags);
+    dump_tags(&settings, &tags);
+
+#if 0
+    qsort(tags.strings, tags.num_strings, sizeof(char *), &compare);
+    {
+        size_t i;
+        for (i = 0; i < tags.num_strings; i++) {
+            puts(tags.strings[i]);
+        }
+    }
+    free_tags(&tags);
+#endif
+
     return EXIT_SUCCESS;
 }
