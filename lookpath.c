@@ -364,11 +364,8 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
     break;
     case FULL_PATH:
     {
-        for (
-                struct tag *it = tags->tags;
-                it <= &tags->tags[tags->num_tags - 1];
-                it++
-        ) {
+        struct tag *it;
+        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
             /* when no matches in tag, length == position */
             for (size_t idx = it->position; idx < it->length; idx++) {
                 printf("%s/%s\n", it->name, tags->strings[idx]);
@@ -378,11 +375,8 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
     break;
     case FULL_PATH_SORTED:
     {
-        for (
-                struct tag *it = tags->tags;
-                it <= &tags->tags[tags->num_tags - 1];
-                it++
-        ) {
+        struct tag *it;
+        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
             qsort(&tags->strings[it->position],
                   it->length - it->position,
                   sizeof(char *),
@@ -400,11 +394,8 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
         const char *POINT = "├─";
         const char *LAST_POINT = "└─";
 
-        for (
-                struct tag *it = tags->tags;
-                it <= &tags->tags[tags->num_tags - 1];
-                it++
-        ) {
+        struct tag *it;
+        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
             if (!has_matches(it)) {
                 continue;
             }
@@ -427,11 +418,8 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
         const char *POINT = "├─";
         const char *LAST_POINT = "└─";
 
-        for (
-                struct tag *it = tags->tags;
-                it <= &tags->tags[tags->num_tags - 1];
-                it++
-        ) {
+        struct tag *it;
+        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
             if (!has_matches(it)) {
                 continue;
             }
