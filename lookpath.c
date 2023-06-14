@@ -16,8 +16,14 @@
 
 struct tag {
     char *name;
+    /* TODO: use pointers instead of indices */
+#if 0
+    char ***start;
+    char ***end;
+#else
     size_t position;
     size_t length;
+#endif
 };
 
 typedef struct {
@@ -37,27 +43,50 @@ enum error {
     WRONG_ARGS,
     DOUBLE_PATTERN,
     NO_PATTERN,
+    SHOW_USAGE,
 
     NO_ERROR = 0
 };
-#define HAS_ERROR(p) ((p) != NO_ERROR)
+#define HAS_ERROR(p) ((p) < NO_ERROR)
 
 enum print_mode {
     SORTED,
     FULL_PATH,
-    FULL_PATH_SORTED, /* maybe */
-    TREE
+    FULL_PATH_SORTED,
+    TREE,
+    TREE_SORTED
 };
 
-#define FLAG_SORTED "-S"
-#define FLAG_FULL_PATH "-f"
-#define FLAG_FULL_PATH_SORTED "-F"
-#define FLAG_TREE "-t"
+const char *flags[] = {
+    [SORTED] = "-S",
+    [FULL_PATH] = "-f",
+    [FULL_PATH_SORTED] = "-F",
+    [TREE] = "-t",
+    [TREE_SORTED] = "-T",
+    "-h" /* TODO: make this indexed somehow */
+};
+
+const char *flag_descs[] = {
+    [SORTED] = "prints filenames as a sorted list (default)",
+    [FULL_PATH] = "prints full paths, unsorted as given by readdir(2)",
+    [FULL_PATH_SORTED] = "prints full path sorted by basename",
+    [TREE] = "prints matches as a tree, unsorted, as given by readdir(2)",
+    [TREE_SORTED] = "prints as a tree with sorted elements",
+    [TREE_SORTED + 1] = "print this help"
+};
 
 typedef struct {
     enum print_mode print_mode;
     char *pattern;
 } settings_t;
+
+void usage(const char *prog_name) {
+    size_t idx;
+    printf("%s:\n", prog_name);
+    for (idx = 0; idx < sizeof(flags)/sizeof(flags[0]); idx++) {
+        printf("    %s:    %s\n", flags[idx], flag_descs[idx]);
+    }
+}
 
 int what_happened(enum error code, const char *prog_name) {
     (void) prog_name;
@@ -88,6 +117,9 @@ int what_happened(enum error code, const char *prog_name) {
     case NO_PATTERN:
         fprintf(stderr, "no pattern provided in arguments\n");
         break;
+    case SHOW_USAGE:
+        usage(prog_name);
+        return EXIT_SUCCESS;
     default:
         return EXIT_SUCCESS;
     }
@@ -180,14 +212,14 @@ int update_matches(const char *path,
 
     while ((entry = readdir(dir))) {
         if (matches_pattern(entry->d_name, pattern, pattern_len)) {
-            int result =
+            int end_of_matches =
                 add_to_matchlist(matches_list, num_matches, entry->d_name);
-            if (num_matches < 0) {
+            if (end_of_matches < 0) {
                 closedir(dir);
-                return result;
+                return end_of_matches;
             }
 
-            num_matches = result;
+            num_matches = end_of_matches;
         }
     }
     closedir(dir);
@@ -228,10 +260,13 @@ tagged_list *add_tag(tagged_list *ts,
 }
 
 int parse_arguments(settings_t *settings, int argc, char **argv) {
-    const size_t flag_cap = 2;
+    const size_t flag_cap = 2; /* { '-', <id> } */
 
     int idx;
     for (idx = 1; idx < argc; idx++) {
+        int enum_iter;
+        bool set = false;
+
         if (argv[idx][0] != '-') {
             if (settings->pattern != NULL) {
                 return DOUBLE_PATTERN;
@@ -240,24 +275,18 @@ int parse_arguments(settings_t *settings, int argc, char **argv) {
             continue;
         }
 
-        if (strncmp(argv[idx], FLAG_SORTED, flag_cap) == 0) {
-            settings->print_mode = SORTED;
-            continue;
+        /* iterate through all print modes to see if the arg sets print mode */
+        for (enum_iter = SORTED; enum_iter <= TREE_SORTED; enum_iter++) {
+            if (strncmp(argv[idx], flags[enum_iter], flag_cap) == 0) {
+                settings->print_mode = enum_iter;
+                set = true;
+                break;
+            }
         }
+        if (set) continue;
 
-        if (strncmp(argv[idx], FLAG_FULL_PATH, flag_cap) == 0) {
-            settings->print_mode = FULL_PATH;
-            continue;
-        }
-
-        if (strncmp(argv[idx], FLAG_FULL_PATH_SORTED, flag_cap) == 0) {
-            settings->print_mode = FULL_PATH_SORTED;
-            continue;
-        }
-
-        if (strncmp(argv[idx], FLAG_TREE, flag_cap) == 0) {
-            settings->print_mode = TREE;
-            continue;
+        if (strncmp(argv[idx], "-h", flag_cap) == 0) {
+            return SHOW_USAGE;
         }
 
         return WRONG_ARGS;
@@ -285,34 +314,33 @@ void free_tags(tagged_list *t) {
 int tag_each_match(char *env_path,
                    const char *pattern,
                    tagged_list *tags) {
-    char *path, *remaining;
     size_t pattern_len = strlen(pattern);
 
     size_t num_tags = 0;
     int num_matches = 0;
 
+    char *path, *remaining;
     for (
             path = strtok_r(env_path, PATH_SEPARATOR, &remaining);
             path != NULL;
             path = strtok_r(NULL, PATH_SEPARATOR, &remaining)
     ) {
-        int result = 0;
+        int end_of_matches = 0;
         tagged_list *resized_tags = NULL;
 
-        /* TODO: better name for result */
-        result =
+        end_of_matches =
             update_matches(path, pattern, pattern_len, &tags->strings, num_matches);
-        if (result < 0) {
-            return result;
+        if (end_of_matches < 0) {
+            return end_of_matches;
         }
 
-        resized_tags = add_tag(tags, path, num_matches, result);
+        resized_tags = add_tag(tags, path, num_matches, end_of_matches);
         if (resized_tags == NULL) {
             return FAILED_BUFFER_REALLOC;
         }
         tags = resized_tags;
-        tags->num_strings = result;
-        num_matches = result;
+        tags->num_strings = end_of_matches;
+        num_matches = end_of_matches;
     }
 
     return num_tags;
@@ -358,13 +386,13 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
         struct tag *it;
         for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
             size_t idx;
-            if (!has_matches(it)) {
-                continue;
-            }
-            qsort(&tags->strings[it->position], it->length, sizeof(char *), &compare);
+            qsort(&tags->strings[it->position],
+                  it->length - it->position,
+                  sizeof(char *),
+                  &compare);
 
             for (idx = it->position; idx < it->length; idx++) {
-                printf("%s %s\n", it->name, tags->strings[idx]);
+                printf("%s/%s\n", it->name, tags->strings[idx]);
             }
         }
     }
@@ -372,18 +400,48 @@ void do_settings(const settings_t *settings, tagged_list *tags) {
     case TREE:
     {
         struct tag *it;
+        /* TODO: make this use wchar... */
         const char *POINT = "├─";
         const char *LAST_POINT = "└─";
 
         for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
-            size_t idx = 0;
-
+            size_t idx;
             if (!has_matches(it)) {
                 continue;
             }
+
             printf("%s:\n", it->name);
             for (idx = it->position; idx < it->length; idx++) {
-                /* WARN: probably wrong */
+                const char *point = POINT;
+
+                if (idx == it->length - 1) {
+                    point = LAST_POINT; /* why does this work??? */
+                }
+                printf("%s %s\n", point, tags->strings[idx]);
+            }
+        }
+    }
+    break;
+    case TREE_SORTED:
+    {
+        struct tag *it;
+        /* TODO: make this use wchar... */
+        const char *POINT = "├─";
+        const char *LAST_POINT = "└─";
+
+        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+            size_t idx;
+            if (!has_matches(it)) {
+                continue;
+            }
+
+            qsort(&tags->strings[it->position],
+                  it->length - it->position,
+                  sizeof(char *),
+                  &compare);
+
+            printf("%s:\n", it->name);
+            for (idx = it->position; idx < it->length; idx++) {
                 const char *point = POINT;
 
                 if (idx == it->length - 1) {
