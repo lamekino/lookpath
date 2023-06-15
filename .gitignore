@@ -1,7 +1,5 @@
 # Executable Name
 lookpath
-# just launches build.sh
-Makefile
 
 # Prerequisites
 *.d
