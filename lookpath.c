@@ -351,97 +351,104 @@ bool has_matches(const struct tag *tag) {
     return tag->length != tag->position;
 }
 
-void do_settings(const settings_t *settings, tagged_list *tags) {
-    switch (settings->print_mode) {
-    /* TODO: MAKE THESE FUNCTIONS! */
-    case SORTED:
-    {
-        qsort(tags->strings, tags->num_strings, sizeof(char *), &compare);
-        for (size_t i = 0; i < tags->num_strings; i++) {
-            puts(tags->strings[i]);
+void print_as_sorted(const tagged_list *tags) {
+    qsort(tags->strings, tags->num_strings, sizeof(char *), &compare);
+    for (size_t i = 0; i < tags->num_strings; i++) {
+        puts(tags->strings[i]);
+    }
+}
+
+void print_as_full_path(const tagged_list *tags) {
+    struct tag *it;
+    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+        /* when no matches in tag, length == position */
+        for (size_t idx = it->position; idx < it->length; idx++) {
+            printf("%s/%s\n", it->name, tags->strings[idx]);
         }
     }
-    break;
-    case FULL_PATH:
-    {
-        struct tag *it;
-        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
-            /* when no matches in tag, length == position */
-            for (size_t idx = it->position; idx < it->length; idx++) {
-                printf("%s/%s\n", it->name, tags->strings[idx]);
-            }
+}
+
+void print_as_sorted_full_path(const tagged_list *tags) {
+    struct tag *it;
+    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+        qsort(&tags->strings[it->position],
+                it->length - it->position,
+                sizeof(char *),
+                &compare);
+
+        for (size_t idx = it->position; idx < it->length; idx++) {
+            printf("%s/%s\n", it->name, tags->strings[idx]);
         }
     }
-    break;
-    case FULL_PATH_SORTED:
-    {
-        struct tag *it;
-        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
-            qsort(&tags->strings[it->position],
-                  it->length - it->position,
-                  sizeof(char *),
-                  &compare);
+}
 
-            for (size_t idx = it->position; idx < it->length; idx++) {
-                printf("%s/%s\n", it->name, tags->strings[idx]);
+void print_as_tree(const tagged_list *tags) {
+    /* TODO: make this use wchar... */
+    const char *POINT = "├─";
+    const char *LAST_POINT = "└─";
+
+    struct tag *it;
+    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+        if (!has_matches(it)) {
+            continue;
+        }
+
+        printf("%s:\n", it->name);
+        for (size_t idx = it->position; idx < it->length; idx++) {
+            const char *point = POINT;
+
+            if (idx == it->length - 1) {
+                point = LAST_POINT; /* why does this work??? */
             }
+            printf("%s %s\n", point, tags->strings[idx]);
         }
     }
-    break;
-    case TREE:
-    {
-        /* TODO: make this use wchar... */
-        const char *POINT = "├─";
-        const char *LAST_POINT = "└─";
+}
 
-        struct tag *it;
-        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
-            if (!has_matches(it)) {
-                continue;
+void print_as_sorted_tree(const tagged_list *tags) {
+    /* TODO: make this use wchar... */
+    const char *POINT = "├─";
+    const char *LAST_POINT = "└─";
+
+    struct tag *it;
+    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+        if (!has_matches(it)) {
+            continue;
+        }
+
+        qsort(&tags->strings[it->position],
+              it->length - it->position,
+              sizeof(char *),
+              &compare);
+
+        printf("%s:\n", it->name);
+        for (size_t idx = it->position; idx < it->length; idx++) {
+            const char *point = POINT;
+
+            if (idx == it->length - 1) {
+                point = LAST_POINT; /* why does this work??? */
             }
-
-            printf("%s:\n", it->name);
-            for (size_t idx = it->position; idx < it->length; idx++) {
-                const char *point = POINT;
-
-                if (idx == it->length - 1) {
-                    point = LAST_POINT; /* why does this work??? */
-                }
-                printf("%s %s\n", point, tags->strings[idx]);
-            }
+            printf("%s %s\n", point, tags->strings[idx]);
         }
     }
-    break;
-    case TREE_SORTED:
-    {
-        /* TODO: make this use wchar... */
-        const char *POINT = "├─";
-        const char *LAST_POINT = "└─";
+}
 
-        struct tag *it;
-        for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
-            if (!has_matches(it)) {
-                continue;
-            }
+int do_settings(const settings_t *settings, tagged_list *tags) {
+    const enum print_mode pm = settings->print_mode;
+    void (*printers[])(const tagged_list *) = {
+        [SORTED] = &print_as_sorted,
+        [FULL_PATH] = &print_as_full_path,
+        [FULL_PATH_SORTED] = &print_as_sorted_full_path,
+        [TREE] = &print_as_tree,
+        [TREE_SORTED] = &print_as_sorted_tree
+    };
 
-            qsort(&tags->strings[it->position],
-                  it->length - it->position,
-                  sizeof(char *),
-                  &compare);
-
-            printf("%s:\n", it->name);
-            for (size_t idx = it->position; idx < it->length; idx++) {
-                const char *point = POINT;
-
-                if (idx == it->length - 1) {
-                    point = LAST_POINT; /* why does this work??? */
-                }
-                printf("%s %s\n", point, tags->strings[idx]);
-            }
-        }
+    if (pm < 0 || sizeof(printers)/sizeof(printers[0]) < pm) {
+        return WRONG_ARGS;
     }
-    break;
-    }
+
+    printers[pm](tags);
+    return NO_ERROR;
 }
 
 int main(int argc, char *argv[]) {
