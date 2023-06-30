@@ -91,11 +91,11 @@ int what_happened(enum error code, const char *prog_name) {
     (void) prog_name;
     switch (code) {
     case FAILED_BUFFER_ALLOC:
-        perror("issue with malloc");
+        perror("malloc");
         fprintf(stderr, "failed to allocate buffer\n");
         break;
     case FAILED_BUFFER_REALLOC:
-        perror("issue with realloc");
+        perror("realloc");
         fprintf(stderr, "failed to reallocate buffer\n");
         break;
     case NO_PATH_VAR:
@@ -226,7 +226,6 @@ tagged_list *add_tag(tagged_list *ts,
                      size_t length) {
     struct tag *new_tag = NULL;
     struct tag *realloc_tags = NULL;
-    size_t name_len = strlen(name);
 
     realloc_tags =
         realloc(ts->tags, sizeof(*ts->tags) * (ts->num_tags + 1));
