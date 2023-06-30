@@ -126,44 +126,44 @@ int what_happened(enum error code, const char *prog_name) {
     return EXIT_FAILURE;
 }
 
+uint64_t pack_byte(uint64_t orig, const char *buf, size_t pos) {
+    return orig | (buf[pos] << 8 * pos);
+}
+
 bool matches_pattern(const char *fname,
                      const char *pattern,
                      size_t pattern_len) {
-    const size_t fname_len = strlen(fname);
-    uint64_t packed_fname = fname[0];
-    uint64_t packed_pattern = pattern[0];
+    const size_t MAX_WINDOW = sizeof(uint64_t);
 
-    if (fname_len < pattern_len) return false;
+    size_t window = MAX_WINDOW;
 
-    /* for each 1 < pattern_len < 4; append the character to a 64 bit integer
-     * which cantains the first char of fname, pattern */
-    switch (pattern_len) {
-    case 4:
-        packed_fname   |= (fname[3] << 24);
-        packed_pattern |= (pattern[3] << 24);
-        /* fall through */
-    case 3:
-        packed_fname   |= (fname[2] << 16);
-        packed_pattern |= (pattern[2] << 16);
-        /* fall through */
-    case 2:
-        packed_fname   |= (fname[1] << 8);
-        packed_pattern |= (pattern[1] << 8);
-        /* fall through */
-    case 1:
-        return packed_fname == packed_pattern;
-    default:
-    {
-        /* TODO: apply the above compression technique for the loop, hopefully
-         * outside of the switch */
-        for (size_t idx = 0; idx < pattern_len; idx++) {
-            if (pattern[idx] != fname[idx]) {
+    for (size_t idx = 0; idx < pattern_len; idx += window) {
+        const char *frame_fname = &fname[idx];
+        const char *frame_pattern = &pattern[idx];
+        const size_t remaining_space = pattern_len - idx;
+
+
+        if (remaining_space < MAX_WINDOW) {
+            window = remaining_space;
+        }
+
+        uint64_t packed_fname = 0;
+        uint64_t packed_pattern = 0;
+        for (size_t w = 0; w < window; w++) {
+            if (frame_fname[w] == '\0') {
                 return false;
             }
+
+            packed_fname = pack_byte(packed_fname, frame_fname, w);
+            packed_pattern = pack_byte(packed_pattern, frame_pattern, w);
+        }
+
+        if (packed_pattern != packed_fname) {
+            return false;
         }
     }
+
     return true;
-    }
 }
 
 /* PERF: pls optimize */
