@@ -169,7 +169,6 @@ bool matches_pattern(const char *fname,
 /* PERF: pls optimize */
 /* - TODO: use geometric resize */
 int add_to_matchlist(char ***matches_list, size_t matches_len, char *filename) {
-    size_t filename_len = strlen(filename);
     char *buffer_fname = NULL;
 
     char **matches_resize =
@@ -178,16 +177,12 @@ int add_to_matchlist(char ***matches_list, size_t matches_len, char *filename) {
         return FAILED_BUFFER_REALLOC;
     }
 
-    buffer_fname = calloc(1, NAME_MAX + 1);
+    /* set the buffer_fname to filename */
+    buffer_fname = strdup(filename);
     if (buffer_fname == NULL) {
         free(matches_resize);
         return FAILED_BUFFER_ALLOC;
     }
-
-    /* set the buffer_fname to filename */
-    /* TODO: look into strdup(3) */
-    memcpy(buffer_fname, filename, filename_len);
-    buffer_fname[filename_len] = '\0';
 
     matches_resize[matches_len] = buffer_fname;
     *matches_list = matches_resize;
