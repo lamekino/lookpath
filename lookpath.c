@@ -236,14 +236,11 @@ tagged_list *add_tag(tagged_list *ts,
     ts->tags = realloc_tags;
     new_tag = &realloc_tags[ts->num_tags];
 
-    new_tag->name = malloc(name_len + 1);
+    new_tag->name = strdup(name);
     if (new_tag->name == NULL) {
         free(ts->tags);
         return NULL;
     }
-
-    memcpy(new_tag->name, name, name_len);
-    new_tag->name[name_len] = '\0';
 
     new_tag->position = position;
     new_tag->length = length;
