@@ -7,6 +7,8 @@
 #include <limits.h>
 #include <dirent.h>
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 /* NOTE: i have no clue if this works on windows */
 #ifdef __WIN32
 #define PATH_SEPARATOR ";"
@@ -134,9 +136,7 @@ bool matches_pattern(const char *fname,
     for (size_t pos = 0; pos < pattern_len; pos += window) {
         uint64_t has_duplicate = 0;
 
-        if (pattern_len - pos < sizeof(uint64_t)) {
-            window = pattern_len - pos;
-        }
+        window = MIN(sizeof(uint64_t), pattern_len - pos);
 
         for (size_t view = 0; view < window; view++) {
             const char *view_fname = &fname[pos + view];
@@ -146,7 +146,8 @@ bool matches_pattern(const char *fname,
                 return false;
             }
 
-            has_duplicate |= ((uint8_t) *view_fname ^ *view_pattern) << 8 * view;
+            has_duplicate |=
+                ((uint8_t) *view_fname ^ *view_pattern) << 8 * view;
         }
 
         if (has_duplicate) {
