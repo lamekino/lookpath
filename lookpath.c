@@ -479,8 +479,8 @@ int main(int argc, char *argv[]) {
     }
 
     err = tag_each_match(env_path, settings.pattern, &tags);
-    if (!HAS_ERROR(err)) {
-        do_settings(&settings, &tags);
+    if (HAS_ERROR(err)) {
+        err = do_settings(&settings, &tags);
     }
 
     free_tags(&tags);
