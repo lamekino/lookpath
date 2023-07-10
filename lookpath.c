@@ -132,23 +132,21 @@ bool matches_pattern(const char *fname,
     size_t window = sizeof(uint64_t);
 
     for (size_t pos = 0; pos < pattern_len; pos += window) {
-        const char *frame_fname = &fname[pos];
-        const char *frame_pattern = &pattern[pos];
-        const size_t remaining_space = pattern_len - pos;
-
-
         uint64_t has_duplicate = 0;
-        if (remaining_space < sizeof(has_duplicate)) {
-            window = remaining_space;
+
+        if (pattern_len - pos < sizeof(uint64_t)) {
+            window = pattern_len - pos;
         }
 
-        for (size_t w = 0; w < window; w++) {
-            if (frame_fname[w] == '\0') {
+        for (size_t view = 0; view < window; view++) {
+            const char *view_fname = &fname[pos + view];
+            const char *view_pattern = &pattern[pos + view];
+
+            if (*view_fname == '\0') {
                 return false;
             }
 
-            has_duplicate |=
-                ((uint8_t) frame_fname[w] ^ frame_pattern[w]) << 8 * w;
+            has_duplicate |= ((uint8_t) *view_fname ^ *view_pattern) << 8 * view;
         }
 
         if (has_duplicate) {
