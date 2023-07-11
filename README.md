@@ -2,9 +2,10 @@ Lookpath
 -------
 Searches for files in the users `$PATH`. Inspired by the `look(1)` command.
 
-### Building
+### Running
 ```sh
 $ make
+$ ./lookpath <query>
 ```
 
 ### Installing
