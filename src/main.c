@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <locale.h>
 #include <limits.h>
 #include <dirent.h>
 
@@ -34,6 +35,8 @@ int main(int argc, char *argv[]) {
      * tags.num_strings: the number of strings
      */
     tagged_list tags = {0};
+
+    setlocale(LC_CTYPE, "");
 
     if (argc < 2) {
         return what_happened(INSUFFICIENT_ARGS, argv[0]);

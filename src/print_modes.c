@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h> /* NAME_MAX */
+#include <wchar.h>
 
 #include "print_modes.h"
 #include "arguments.h"
@@ -44,34 +45,37 @@ static void print_as_sorted_full_path(const tagged_list *tags) {
 }
 
 static void print_as_tree(const tagged_list *tags) {
-    /* TODO: make this use wchar... */
-    const char *POINT = "├─";
-    const char *LAST_POINT = "└─";
+    const wchar_t *POINT = L"├─";
+    const wchar_t *LAST_POINT = L"└─";
 
     struct tag *it;
+
+    fwide(stdout, 1);
     for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
         if (!has_matches(it)) {
             continue;
         }
 
-        printf("%s:\n", it->name);
+        wprintf(L"%s:\n", it->name);
         for (size_t idx = it->position; idx < it->length; idx++) {
-            const char *point = POINT;
+            const wchar_t *point = POINT;
 
             if (idx == it->length - 1) {
                 point = LAST_POINT; /* why does this work??? */
             }
-            printf("%s %s\n", point, tags->strings[idx]);
+            wprintf(L"%ls %s\n", point, tags->strings[idx]);
         }
     }
+    fwide(stdout, -1);
 }
 
 static void print_as_sorted_tree(const tagged_list *tags) {
-    /* TODO: make this use wchar... */
-    const char *POINT = "├─";
-    const char *LAST_POINT = "└─";
+    const wchar_t *POINT = L"├─";
+    const wchar_t *LAST_POINT = L"└─";
 
     struct tag *it;
+
+    fwide(stdout, 1);
     for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
         if (!has_matches(it)) {
             continue;
@@ -82,16 +86,17 @@ static void print_as_sorted_tree(const tagged_list *tags) {
               sizeof(char *),
               &compare);
 
-        printf("%s:\n", it->name);
+        wprintf(L"%s:\n", it->name);
         for (size_t idx = it->position; idx < it->length; idx++) {
-            const char *point = POINT;
+            const wchar_t *point = POINT;
 
             if (idx == it->length - 1) {
                 point = LAST_POINT; /* why does this work??? */
             }
-            printf("%s %s\n", point, tags->strings[idx]);
+            wprintf(L"%ls %s\n", point, tags->strings[idx]);
         }
     }
+    fwide(stdout, -1);
 }
 
 printer get_print_mode(enum print_mode pm) {
