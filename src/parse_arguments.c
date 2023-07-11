@@ -55,15 +55,23 @@ int parse_arguments(settings_t *settings, int argc, char **argv) {
         }
 
         arg = set_print_mode(settings, argv[idx]);
-        if (is_print_arg(arg)) continue;
+        if (is_print_arg(arg)) {
+            continue;
+        }
 
         arg = set_misc(settings, argv[idx]);
-        if (arg == FLAG_HELP) return SHOW_USAGE;
-        if (is_misc_arg(arg)) continue;
+        if (arg == FLAG_HELP) {
+            return SHOW_USAGE;
+        }
+        if (is_misc_arg(arg)) {
+            continue;
+        }
 
-        return settings->pattern != NULL && settings->pattern != old_pattern
-            ? DOUBLE_PATTERN
-            : WRONG_ARGS;
+        if (settings->pattern != NULL && settings->pattern != old_pattern) {
+            return DOUBLE_PATTERN;
+        }
+
+        return WRONG_ARGS;
     }
 
     if (settings->pattern == NULL) {

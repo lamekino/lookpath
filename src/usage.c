@@ -9,15 +9,15 @@ void usage(const char *prog_name) {
 
     printf("%s:\n", prog_name);
 
-    printf("display options:\n");
+    printf("  display options:\n");
     it = START_PRINT_FLAGS;
     while (++it < END_PRINT_FLAGS) {
-        printf("    %s:    %s\n", get_argument(it), get_description(it));
+        printf("    %s:  %s\n", get_argument(it), get_description(it));
     }
 
-    printf("misc:\n");
+    printf("  miscellaneous:\n");
     it = START_MISC_FLAGS;
     while (++it < END_MISC_FLAGS) {
-        printf("    %s:    %s\n", get_argument(it), get_description(it));
+        printf("    %s:  %s\n", get_argument(it), get_description(it));
     }
 }

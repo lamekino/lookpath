@@ -11,7 +11,7 @@
 
 const char *get_argument(enum arguments argument) {
     const char *flags[] = {
-#define FLAG_STRINGS(label, string) [FLAG_##label] = string,
+#define FLAG_STRINGS(label, flag, _) [FLAG_##label] = flag,
     ALL_FLAGS(FLAG_STRINGS)
 #undef FLAG_STRINGS
     };
@@ -24,18 +24,14 @@ const char *get_argument(enum arguments argument) {
 
 const char *get_description(enum arguments argument) {
     const char *descriptions[] = {
-#define FLAG_STRINGS(label, string) [FLAG_##label] = string,
+#define FLAG_STRINGS(label, _, desc) [FLAG_##label] = desc,
     ALL_FLAGS(FLAG_STRINGS)
 #undef FLAG_STRINGS
     };
 
-    (void) descriptions;
-    (void) argument;
-
     ASSERT(0 < argument && argument < LEN_ARGUMENTS);
 
-    /* TODO: */
-    return (void*) 0;
+    return argument[descriptions];
 }
 
 bool is_print_arg(enum arguments a) {
