@@ -1,6 +1,7 @@
 #ifndef TAGGED_LIST_H
 #define TAGGED_LIST_H
 #include <stddef.h>
+#include <stdbool.h>
 
 struct tag {
     char *name;
