@@ -1,13 +1,7 @@
 #include <stdbool.h>
 
 #include "arguments.h"
-
-#ifdef DEBUG
-#include <assert.h>
-#define ASSERT(x) assert((x))
-#else
-#define ASSERT(_)
-#endif
+#include "debug_assert.h"
 
 const char *get_argument(enum arguments argument) {
     const char *flags[] = {

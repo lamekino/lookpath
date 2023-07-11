@@ -12,12 +12,13 @@ INCLUDE = -I$(SRC_DIR)
 ifeq ($(DEBUG),1)
 	CCFLAGS = \
 		-std=c9x -ggdb -Wall -Wextra -Werror -Wno-unused-variable \
-		-Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-function\
+		-Wno-unused-parameter -Wno-unused-but-set-variable \
+		-Wno-unused-function -Wno-unused-local-typedefs \
 		-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500 -DDEBUG=1
 else
 	CCFLAGS = \
-		-std=c9x -Wall -Wextra -Werror -O3 -D_POSIX_C_SOURCE=200809L \
-		-D_XOPEN_SOURCE=500
+		-std=c9x -Wall -Wextra -Werror -Wno-unused-local-typedefs -O3 \
+		-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500
 endif
 
 SRC = $(shell find $(SRC_DIR) -name "*.c")
