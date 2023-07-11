@@ -7,6 +7,11 @@
 #include <limits.h>
 #include <dirent.h>
 
+#include "errors.h"
+#include "settings.h"
+#include "usage.h"
+#include "parse_arguments.h"
+
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 /* NOTE: i have no clue if this works on windows */
@@ -35,59 +40,6 @@ typedef struct {
     size_t num_strings;
     size_t num_tags;
 } tagged_list;
-
-enum error {
-    FAILED_BUFFER_ALLOC = INT_MIN,
-    FAILED_BUFFER_REALLOC,
-    NO_PATH_VAR,
-    EMPTY_PATH_VAR,
-    INSUFFICIENT_ARGS,
-    WRONG_ARGS,
-    DOUBLE_PATTERN,
-    NO_PATTERN,
-    SHOW_USAGE,
-
-    NO_ERROR = 0
-};
-#define HAS_ERROR(p) ((p) < NO_ERROR)
-
-enum print_mode {
-    SORTED,
-    FULL_PATH,
-    FULL_PATH_SORTED,
-    TREE,
-    TREE_SORTED
-};
-
-const char *flags[] = {
-    [SORTED] = "-S",
-    [FULL_PATH] = "-f",
-    [FULL_PATH_SORTED] = "-F",
-    [TREE] = "-t",
-    [TREE_SORTED] = "-T",
-    "-h" /* TODO: make this indexed somehow */
-};
-
-const char *flag_descs[] = {
-    [SORTED] = "prints filenames as a sorted list (default)",
-    [FULL_PATH] = "prints full paths, unsorted as given by readdir(2)",
-    [FULL_PATH_SORTED] = "prints full path sorted by basename",
-    [TREE] = "prints matches as a tree, unsorted, as given by readdir(2)",
-    [TREE_SORTED] = "prints as a tree with sorted elements",
-    [TREE_SORTED + 1] = "print this help"
-};
-
-typedef struct {
-    enum print_mode print_mode;
-    char *pattern;
-} settings_t;
-
-void usage(const char *prog_name) {
-    printf("%s:\n", prog_name);
-    for (size_t idx = 0; idx < sizeof(flags)/sizeof(flags[0]); idx++) {
-        printf("    %s:    %s\n", flags[idx], flag_descs[idx]);
-    }
-}
 
 int what_happened(enum error code, const char *prog_name) {
     (void) prog_name;
@@ -240,45 +192,7 @@ tagged_list *add_tag(tagged_list *ts,
     return ts;
 }
 
-int parse_arguments(settings_t *settings, int argc, char **argv) {
-    const size_t flag_cap = 2; /* { '-', <id> } */
-
-    for (int idx = 1; idx < argc; idx++) {
-        bool set = false;
-
-        if (argv[idx][0] != '-') {
-            if (settings->pattern != NULL) {
-                return DOUBLE_PATTERN;
-            }
-            settings->pattern = argv[idx];
-            continue;
-        }
-
-        /* iterate through all print modes to see if the arg sets print mode */
-        for (int enum_iter = SORTED; enum_iter <= TREE_SORTED; enum_iter++) {
-            if (strncmp(argv[idx], flags[enum_iter], flag_cap) == 0) {
-                settings->print_mode = enum_iter;
-                set = true;
-                break;
-            }
-        }
-        if (set) continue;
-
-        if (strncmp(argv[idx], "-h", flag_cap) == 0) {
-            return SHOW_USAGE;
-        }
-
-        return WRONG_ARGS;
-    }
-
-    if (settings->pattern == NULL) {
-        return NO_PATTERN;
-    }
-
-    return NO_ERROR;
-}
-
-void free_tags(tagged_list *t) {
+void clear_tags(tagged_list *t) {
     while (t->num_strings--) {
         free(t->strings[t->num_strings]);
     }
@@ -288,6 +202,9 @@ void free_tags(tagged_list *t) {
 
     free(t->tags);
     free(t->strings);
+
+    t->tags = NULL;
+    t->strings = NULL;
 }
 
 int tag_each_match(char *env_path,
@@ -417,20 +334,9 @@ void print_as_sorted_tree(const tagged_list *tags) {
 }
 
 int do_settings(const settings_t *settings, tagged_list *tags) {
-    const enum print_mode pm = settings->print_mode;
-    void (*printers[])(const tagged_list *) = {
-        [SORTED] = &print_as_sorted,
-        [FULL_PATH] = &print_as_full_path,
-        [FULL_PATH_SORTED] = &print_as_sorted_full_path,
-        [TREE] = &print_as_tree,
-        [TREE_SORTED] = &print_as_sorted_tree
-    };
-
-    if (pm < 0 || sizeof(printers)/sizeof(printers[0]) < pm) {
-        return WRONG_ARGS;
-    }
-
-    printers[pm](tags);
+    /* TODO: */
+    (void) settings;
+    print_as_tree(tags);
     return NO_ERROR;
 }
 
@@ -475,6 +381,6 @@ int main(int argc, char *argv[]) {
         err = do_settings(&settings, &tags);
     }
 
-    free_tags(&tags);
+    clear_tags(&tags);
     return what_happened(err, argv[0]);
 }
