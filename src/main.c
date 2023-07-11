@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
         return what_happened(err, argv[0]);
     }
 
-    err = tag_matches (env_path, settings.pattern, &tags);
+    err = tag_matches(env_path, settings.pattern, &tags);
     if (!HAS_ERROR(err)) {
         err = do_settings(&settings, &tags);
     }
