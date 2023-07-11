@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h> /* NAME_MAX */
+#include <limits.h>
 #include <wchar.h>
 
 #include "print_modes.h"
@@ -99,7 +99,7 @@ static void print_as_sorted_tree(const tagged_list *tags) {
 }
 
 printer get_print_mode(enum print_mode pm) {
-    printer printers[] = {
+    const printer printers[] = {
         [PM_SORTED] = &print_as_sorted,
         [PM_FULL_PATH] = &print_as_full_path,
         [PM_FULL_PATH_SORTED] = &print_as_sorted_full_path,
