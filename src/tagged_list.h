@@ -4,14 +4,8 @@
 
 struct tag {
     char *name;
-    /* TODO: use pointers instead of indices */
-#if 0
-    char ***start;
-    char ***end;
-#else
     size_t position;
     size_t length;
-#endif
 };
 
 typedef struct {

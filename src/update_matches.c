@@ -39,8 +39,6 @@ static bool matches_pattern(const char *fname,
     return true;
 }
 
-/* PERF: pls optimize */
-/* - TODO: use geometric resize */
 static int add_to_matchlist(char ***matches_list,
                             size_t matches_len,
                             char *filename) {
