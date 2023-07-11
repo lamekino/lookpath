@@ -109,7 +109,9 @@ printer get_print_mode(enum print_mode pm) {
         missing_print_mode_impl
     );
 
-    ASSERT(0 < pm && pm < END_PRINT_MODE);
+    if (pm <= START_PRINT_MODE || pm >= END_PRINT_MODE) {
+        return &print_as_sorted;
+    }
 
-    return NULL;
+    return printers[pm];
 }
