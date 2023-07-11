@@ -9,8 +9,7 @@
 #include "debug_assert.h"
 
 static int compare(const void *a, const void *b) {
-    // return strncmp(*((const char **) a), *((const char **) b), NAME_MAX);
-    return strcmp(*((const char **) a), *((const char **) b));
+    return strncmp(*((const char **) a), *((const char **) b), NAME_MAX);
 }
 
 static void print_as_sorted(const tagged_list *tags) {
