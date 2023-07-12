@@ -64,7 +64,6 @@ test: $(OBJ_TESTS) all
 			$$(find $(OBJ_DIR) -mindepth 1 -not -name main.o); \
 	done; \
 	for exe in $(TEST_EXE)/*; do \
-		printf '=>> Running test %s\n' "$$exe"; \
 		$$exe; \
 	done
 
