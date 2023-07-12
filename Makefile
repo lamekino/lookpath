@@ -33,7 +33,7 @@ TESTS = $(shell find $(TEST_SRC) -name "*.c")
 OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 OBJ_TESTS = $(patsubst $(TEST_SRC)/%.c, $(TEST_OBJ)/%.o, $(TESTS))
 
-all: $(PROG_NAME)
+all: $(BUILD_DIR)/$(PROG_NAME)
 
 clean:
 	rm -fr $(BUILD_DIR)
@@ -44,8 +44,8 @@ install: all
 compile_commands.json: clean
 	@bear -- make
 
-$(PROG_NAME): $(OBJ)
-	$(CC) -o $(BUILD_DIR)/$@ $^
+$(BUILD_DIR)/$(PROG_NAME): $(OBJ)
+	$(CC) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@) || true
