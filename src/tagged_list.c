@@ -1,3 +1,7 @@
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -34,10 +38,14 @@ tagged_list *add_tag(tagged_list *ts,
 }
 
 void clear_tags(tagged_list *t) {
-    while (t->num_strings--) {
+    /*
+     * NOTE: (t->num_strings && t->num_strings--) guards empty tag list from
+     * being underflowed
+     */
+    while (t->num_strings && t->num_strings--) {
         free(t->strings[t->num_strings]);
     }
-    while (t->num_tags--) {
+    while (t->num_tags && t->num_tags--) {
         free(t->tags[t->num_tags].name);
     }
 
