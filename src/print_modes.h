@@ -2,6 +2,7 @@
 #define PRINT_MODES_H
 #include "arguments.h"
 #include "tagged_list.h"
+#include "settings.h"
 
 typedef void (*printer)(const tagged_list *);
 

@@ -7,6 +7,7 @@
 #include "print_modes.h"
 #include "arguments.h"
 #include "debug_assert.h"
+#include "settings.h"
 
 static int compare(const void *a, const void *b) {
     return strncmp(*((const char **) a), *((const char **) b), NAME_MAX);
@@ -107,15 +108,10 @@ printer get_print_mode(enum print_mode pm) {
         [PM_TREE_SORTED] = &print_as_sorted_tree,
     };
 
-    STATIC_ASSERT(
-        sizeof(printers)/sizeof(printers[0])
-            == END_PRINT_MODE - START_PRINT_MODE,
+    ASSERT(0 <= pm && pm < LEN_PRINT_MODES);
+    STATIC_ASSERT(sizeof(printers)/sizeof(printers[0]) == LEN_PRINT_MODES,
         missing_print_mode_impl
     );
-
-    if (pm <= START_PRINT_MODE || pm >= END_PRINT_MODE) {
-        return &print_as_sorted;
-    }
 
     return printers[pm];
 }
