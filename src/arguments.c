@@ -28,10 +28,11 @@ const char *get_description(enum arguments argument) {
     return argument[descriptions];
 }
 
-bool is_print_arg(enum arguments a) {
-    return START_PRINT_FLAGS < a && a < END_PRINT_FLAGS;
-}
+#define IMPL_IS_FLAG(kind, start, end) \
+    bool is_##kind##_arg(enum arguments a) { \
+        return (start) < a && a < (end); \
+    }
 
-bool is_misc_arg(enum arguments a) {
-    return START_MISC_FLAGS < a && a < END_MISC_FLAGS;
-}
+IMPL_IS_FLAG(print, START_PRINT_FLAGS, END_PRINT_FLAGS)
+IMPL_IS_FLAG(query, START_QUERY_FLAGS, END_QUERY_FLAGS)
+IMPL_IS_FLAG(misc, START_MISC_FLAGS, END_MISC_FLAGS)
