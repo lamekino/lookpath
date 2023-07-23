@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "arguments.h"
+#include "debug_assert.h"
 #include "errors.h"
 #include "parse_arguments.h"
 #include "settings.h"
@@ -10,39 +11,62 @@
 
 #define FLAG_CAP 2
 
+typedef void (*apply_f)(settings_t *, enum arguments);
+
 static bool set_pattern(settings_t *settings, char *given) {
     if (given[0] == '-') {
         return false;
     }
 
     settings->pattern = given;
+    settings->pattern_len = strlen(given);
     return true;
 }
 
-static enum arguments set_print_mode(settings_t *settings, const char *given) {
-    enum print_mode it = START_PRINT_MODE;
+static enum arguments set_option(settings_t *settings,
+                                 const char *given,
+                                 apply_f apply,
+                                 enum arguments start,
+                                 enum arguments end) {
+    enum arguments it = start;
 
-    while (++it < END_PRINT_MODE) {
+    while (++it < end) {
         if (strncmp(given, get_argument((enum arguments) it), FLAG_CAP) == 0) {
-            settings->print_mode = it;
+            apply(settings, it);
             break;
         }
     }
 
-    return (enum arguments) it;
+    return it;
 }
 
-static enum arguments set_misc(settings_t *settings, char *given) {
+static void apply_print_mode(settings_t *settings, enum arguments arg) {
+    settings->print_mode = (enum print_mode) arg - START_PRINT_FLAGS - 1;
+}
+
+static void apply_misc_option(settings_t *settings, enum arguments arg) {
     (void) settings;
-    enum arguments it = START_MISC_FLAGS;
+    (void) arg;
+    /* do nothing */
+}
 
-    while (++it < END_MISC_FLAGS) {
-        if (strncmp(given, get_argument((enum arguments) it), FLAG_CAP) == 0) {
-            break;
-        }
-    }
+static void apply_query_option(settings_t *settings, enum arguments arg) {
+    settings->order = (enum order) arg - START_QUERY_FLAGS;
+}
 
-    return (enum arguments) it;
+static enum arguments set_print_mode(settings_t *settings, char *given) {
+    return set_option(settings, given, &apply_print_mode,
+            START_PRINT_FLAGS, END_PRINT_FLAGS);
+}
+
+static enum arguments set_misc_option(settings_t *settings, char *given) {
+    return set_option(settings, given, &apply_misc_option,
+            START_MISC_FLAGS, END_MISC_FLAGS);
+}
+
+static enum arguments set_query_mode(settings_t *settings, char *given) {
+    return set_option(settings, given, &apply_query_option,
+            START_QUERY_FLAGS, END_QUERY_FLAGS);
 }
 
 int parse_arguments(settings_t *settings, int argc, char **argv) {
@@ -50,22 +74,18 @@ int parse_arguments(settings_t *settings, int argc, char **argv) {
         enum arguments arg;
         const char *old_pattern = settings->pattern;
 
-        if (set_pattern(settings, argv[idx])) {
-            continue;
-        }
+        if (set_pattern(settings, argv[idx])) continue;
 
+        /* TODO: generalize this? */
         arg = set_print_mode(settings, argv[idx]);
-        if (is_print_arg(arg)) {
-            continue;
-        }
+        if (is_print_arg(arg)) continue;
 
-        arg = set_misc(settings, argv[idx]);
-        if (arg == FLAG_HELP) {
-            return SHOW_USAGE;
-        }
-        if (is_misc_arg(arg)) {
-            continue;
-        }
+        arg = set_query_mode(settings, argv[idx]);
+        if (is_query_arg(arg)) continue;
+
+        arg = set_misc_option(settings, argv[idx]);
+        if (arg == FLAG_HELP) return SHOW_USAGE;
+        if (is_misc_arg(arg)) continue;
 
         if (settings->pattern != NULL && settings->pattern != old_pattern) {
             return DOUBLE_PATTERN;
