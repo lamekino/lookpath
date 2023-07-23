@@ -36,16 +36,9 @@ enum arguments {
     LEN_ARGUMENTS
 };
 
-enum print_mode {
-    START_PRINT_MODE = START_PRINT_FLAGS,
-#define PRINT_MODE_ENUM(label, ...) PM_##label,
-    PRINT_FLAGS(PRINT_MODE_ENUM)
-#undef PRINT_MODE_ENUM
-    END_PRINT_MODE
-};
-
 const char *get_argument(enum arguments argument);
 const char *get_description(enum arguments argument);
 bool is_print_arg(enum arguments a);
+bool is_query_arg(enum arguments a);
 bool is_misc_arg(enum arguments a);
 #endif
