@@ -14,13 +14,10 @@
 #define PATH_SEPARATOR ":"
 #endif
 
-int tag_matches(char *env_path,
-                const char *pattern,
-                tagged_list *tags) {
-    size_t pattern_len = strlen(pattern);
-
-    size_t num_tags = 0;
-    int num_matches = 0;
+int tag_matches(const settings_t *settings,
+                tagged_list *tags,
+                char *env_path) {
+    int head_cursor = 0;
 
     char *path, *remaining;
     for (
@@ -28,24 +25,34 @@ int tag_matches(char *env_path,
             path != NULL;
             path = strtok_r(NULL, PATH_SEPARATOR, &remaining)
     ) {
-        int end_of_matches = 0;
         tagged_list *resized_tags = NULL;
+        int tail_cursor = head_cursor;
+        int new_cursor = /* tracks the end of the current tag */
+            update_matches(head_cursor,
+                           &tags->strings,
+                           settings,
+                           path);
 
-        end_of_matches =
-            update_matches(path, pattern, pattern_len, &tags->strings, num_matches);
-        if (end_of_matches < 0) {
-            return end_of_matches;
+        if (new_cursor < 0) {
+            return new_cursor;
         }
 
-        resized_tags = add_tag(tags, path, num_matches, end_of_matches);
+        /* don't alloc things with no matches */
+        if (tail_cursor == new_cursor) {
+            continue;
+        }
+
+        tail_cursor = new_cursor;
+        resized_tags = add_tag(tags, path, head_cursor, tail_cursor);
         if (resized_tags == NULL) {
             return FAILED_BUFFER_REALLOC;
         }
         tags = resized_tags;
-        tags->num_strings = end_of_matches;
-        num_matches = end_of_matches;
+
+        tags->num_strings = tail_cursor;
+        head_cursor = tail_cursor;
     }
 
-    return num_tags;
+    return NO_ERROR;
 }
 
