@@ -36,19 +36,19 @@ static int *get_settings_field(const settings_t *settings,
 }
 
 static enum argument set_option(settings_t *settings,
-                                enum category cat,
+                                enum category category,
                                 const char *given) {
-    const enum argument end = get_end(cat);
-    enum argument it = get_start(cat);
+    const enum argument end = get_end(category);
+    enum argument it = get_start(category);
 
     while (++it < end) {
         const char *flag_string = get_flag_string(it);
         bool found_argument = strncmp(given, flag_string, FLAG_CAP) == 0;
-        int *settings_field = get_settings_field(settings, cat);
+        int *settings_field = get_settings_field(settings, category);
 
         if (found_argument) {
             if (settings_field != NULL) {
-                *settings_field = (int) get_base_enum(it);
+                *settings_field = get_base_enum(it);
             }
             break;
         }
