@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "search_methods.h"
+#include "arguments.h"
 #include "debug_assert.h"
 #include "limits.h"
 
@@ -100,7 +101,7 @@ search_method_fp get_matcher(enum search_methods strategy) {
         [LEFT_TO_RIGHT] = &matches_pattern,
         [RIGHT_TO_LEFT] = &matches_pattern_reverse
     };
-    STATIC_ASSERT(sizeof(methods)/sizeof(methods[0]) == NUM_SEARCH_METHODS,
+    STATIC_ASSERT(IS_LENGTH(NUM_SEARCH_METHODS, methods),
             missing_matcher_impl);
 
     return methods[strategy];

@@ -50,7 +50,7 @@ enum arguments get_start(enum catagory catagory) {
         [QUERY_FLAGS] = START_QUERY_FLAGS,
         [MISC_FLAGS] = START_MISC_FLAGS
     };
-    STATIC_ASSERT(sizeof(start_values)/sizeof(start_values[0]) == NUM_CATEGORIES,
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, start_values),
             missing_get_start_value);
 
     return start_values[catagory];
@@ -64,7 +64,7 @@ enum arguments get_end(enum catagory catagory) {
         [QUERY_FLAGS] = END_QUERY_FLAGS,
         [MISC_FLAGS] = END_MISC_FLAGS
     };
-    STATIC_ASSERT(sizeof(end_values)/sizeof(end_values[0]) == NUM_CATEGORIES,
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, end_values),
             missing_get_end_value);
 
     return end_values[catagory];
