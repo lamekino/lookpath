@@ -59,7 +59,7 @@ static void apply_query_option(settings_t *settings, enum argument arg) {
     settings->strategy = (enum search_methods) (arg - START_QUERY_FLAGS);
 }
 
-static change_settings_fp get_setter(enum catagory catagory) {
+static change_settings_fp get_setter(enum category catagory) {
     ASSERT(is_category(catagory));
 
     static const change_settings_fp setters[] = {
@@ -83,7 +83,7 @@ enum error parse_arguments(settings_t *settings, int argc, char **argv) {
             return DOUBLE_PATTERN;
         }
 
-        for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
+        for (enum category c = 0; c < NUM_CATEGORIES; c++) {
             enum argument arg = set_option(settings, argv[idx], get_setter(c),
                                             get_start(c), get_end(c));
 

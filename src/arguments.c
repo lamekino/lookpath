@@ -6,7 +6,7 @@
 #ifdef DEBUG
 void assert_catagory(enum argument arg) {
     bool is_member = false;
-    for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
+    for (enum category c = 0; c < NUM_CATEGORIES; c++) {
         is_member |= is_category_member(arg, c);
     }
 
@@ -42,7 +42,7 @@ const char *get_description(enum argument argument) {
     return argument[descriptions];
 }
 
-enum argument get_start(enum catagory catagory) {
+enum argument get_start(enum category catagory) {
     ASSERT(is_category(catagory));
 
     const enum argument start_values[] = {
@@ -56,7 +56,7 @@ enum argument get_start(enum catagory catagory) {
     return start_values[catagory];
 }
 
-enum argument get_end(enum catagory catagory) {
+enum argument get_end(enum category catagory) {
     ASSERT(is_category(catagory));
 
     const enum argument end_values[] = {
@@ -69,10 +69,25 @@ enum argument get_end(enum catagory catagory) {
     return end_values[catagory];
 }
 
-bool is_category_member(enum argument a, enum catagory c) {
+bool is_category_member(enum argument a, enum category c) {
     return get_start(c) < a && a < get_end(c);
 }
 
 bool is_category(int c) {
     return 0 <= c && c < NUM_CATEGORIES;
+}
+
+static enum category get_catagory(enum argument a) {
+    for (enum category c = 0; c < NUM_CATEGORIES; c++) {
+        if (is_category_member(a, c)) {
+            return c;
+        }
+    }
+
+    ASSERT(0 && "unreachable");
+    return -1;
+}
+
+int get_base_enum(enum argument bounded) {
+    return bounded - get_start(get_catagory(bounded));
 }

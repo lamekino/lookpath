@@ -5,7 +5,7 @@
 
 #include "debug_assert.h"
 
-enum catagory {
+enum category {
     PRINT_FLAGS,
 #define PRINT_FLAGS(X) \
     X(SORTED, "-S", \
@@ -71,10 +71,11 @@ const char *get_flag_full(enum argument argument); /* --flag-name */
 const char *get_flag_terse(enum argument argument); /* -f */
 #endif
 
-enum argument get_start(enum catagory catagory);
-enum argument get_end(enum catagory catagory);
-enum argument get_base_enum(enum argument bounded);
+enum argument get_start(enum category catagory);
+enum argument get_end(enum category catagory);
 
-bool is_category_member(enum argument a, enum catagory c);
+int get_base_enum(enum argument bounded);
+
+bool is_category_member(enum argument a, enum category c);
 bool is_category(int c);
 #endif
