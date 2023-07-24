@@ -4,23 +4,12 @@
 #include <stdbool.h>
 
 #include "arguments.h"
-
-enum order {
-    IN_PLACE,
-    REVERSE,
-    LEN_ORDER
-};
-
-enum print_mode {
-#define PRINT_MODE_ENUM(label, ...) PM_##label,
-    PRINT_FLAGS(PRINT_MODE_ENUM)
-#undef PRINT_MODE_ENUM
-    LEN_PRINT_MODES
-};
+#include "print_modes.h"
+#include "search_methods.h"
 
 typedef struct {
     enum print_mode print_mode;
-    enum order order;
+    enum search_methods strategy;
     char *pattern;
     size_t pattern_len;
 } settings_t;

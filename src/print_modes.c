@@ -99,8 +99,8 @@ static void print_as_sorted_tree(const tagged_list *tags) {
     fwide(stdout, -1);
 }
 
-printer get_print_mode(enum print_mode pm) {
-    const printer printers[] = {
+print_mode_fp get_print_mode(enum print_mode pm) {
+    const print_mode_fp printers[] = {
         [PM_SORTED] = &print_as_sorted,
         [PM_FULL_PATH] = &print_as_full_path,
         [PM_FULL_PATH_SORTED] = &print_as_sorted_full_path,
@@ -108,8 +108,8 @@ printer get_print_mode(enum print_mode pm) {
         [PM_TREE_SORTED] = &print_as_sorted_tree,
     };
 
-    ASSERT(0 <= pm && pm < LEN_PRINT_MODES);
-    STATIC_ASSERT(sizeof(printers)/sizeof(printers[0]) == LEN_PRINT_MODES,
+    ASSERT(0 <= pm && pm < NUM_PRINT_MODES);
+    STATIC_ASSERT(sizeof(printers)/sizeof(printers[0]) == NUM_PRINT_MODES,
         missing_print_mode_impl
     );
 

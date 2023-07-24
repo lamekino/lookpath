@@ -3,36 +3,77 @@
 #include "arguments.h"
 #include "debug_assert.h"
 
+#ifdef DEBUG
+void assert_catagory(enum arguments arg) {
+    bool is_member = false;
+    for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
+        is_member |= is_catagory_member(arg, c);
+    }
+
+    assert(is_member);
+}
+#define ASSERT_IN_CATEGORY(a) assert_catagory((a))
+#else
+#define ASSERT_IN_CATEGORY(_)
+#endif
+
 const char *get_argument(enum arguments argument) {
+    ASSERT_IN_CATEGORY(argument);
+
     const char *flags[] = {
 #define FLAG_STRINGS(label, flag, _) [FLAG_##label] = flag,
     ALL_FLAGS(FLAG_STRINGS)
 #undef FLAG_STRINGS
     };
 
-    ASSERT(0 < argument && argument < LEN_ARGUMENTS);
-
     /* cursed ;) */
     return argument[flags];
 }
 
 const char *get_description(enum arguments argument) {
+    ASSERT_IN_CATEGORY(argument);
+
     const char *descriptions[] = {
 #define FLAG_STRINGS(label, _, desc) [FLAG_##label] = desc,
     ALL_FLAGS(FLAG_STRINGS)
 #undef FLAG_STRINGS
     };
 
-    ASSERT(0 < argument && argument < LEN_ARGUMENTS);
-
     return argument[descriptions];
 }
 
-#define IMPL_IS_FLAG(kind, start, end) \
-    bool is_##kind##_arg(enum arguments a) { \
-        return (start) < a && a < (end); \
-    }
+enum arguments get_start(enum catagory catagory) {
+    ASSERT(is_catagory(catagory));
 
-IMPL_IS_FLAG(print, START_PRINT_FLAGS, END_PRINT_FLAGS)
-IMPL_IS_FLAG(query, START_QUERY_FLAGS, END_QUERY_FLAGS)
-IMPL_IS_FLAG(misc, START_MISC_FLAGS, END_MISC_FLAGS)
+    enum arguments start_values[] = {
+        [PRINT_FLAGS] = START_PRINT_FLAGS,
+        [QUERY_FLAGS] = START_QUERY_FLAGS,
+        [MISC_FLAGS] = START_MISC_FLAGS
+    };
+    STATIC_ASSERT(sizeof(start_values)/sizeof(start_values[0]) == NUM_CATEGORIES,
+            missing_get_start_value);
+
+    return start_values[catagory];
+}
+
+enum arguments get_end(enum catagory catagory) {
+    ASSERT(is_catagory(catagory));
+
+    enum arguments end_values[] = {
+        [PRINT_FLAGS] = END_PRINT_FLAGS,
+        [QUERY_FLAGS] = END_QUERY_FLAGS,
+        [MISC_FLAGS] = END_MISC_FLAGS
+    };
+    STATIC_ASSERT(sizeof(end_values)/sizeof(end_values[0]) == NUM_CATEGORIES,
+            missing_get_end_value);
+
+    return end_values[catagory];
+}
+
+bool is_catagory_member(enum arguments a, enum catagory c) {
+    return get_start(c) < a && a < get_end(c);
+}
+
+bool is_catagory(int c) {
+    return 0 <= c && c < NUM_ARGUMENTS;
+}
