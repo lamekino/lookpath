@@ -13,8 +13,6 @@
 
 #define FLAG_CAP 2
 
-typedef void (*change_settings_fp)(settings_t *, enum argument);
-
 static bool set_pattern(settings_t *settings, char *given) {
     if (given[0] == '-') {
         return false;
@@ -25,54 +23,39 @@ static bool set_pattern(settings_t *settings, char *given) {
     return true;
 }
 
+static int *get_settings_field(const settings_t *settings,
+                               enum category c) {
+    int *fields[] = {
+        [PRINT_FLAGS] = (int *) &settings->print_mode,
+        [QUERY_FLAGS] = (int *) &settings->strategy,
+        [MISC_FLAGS] = NULL
+    };
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, fields), missing_settings_field);
+
+    return fields[c];
+}
+
 static enum argument set_option(settings_t *settings,
-                                const char *given,
-                                const change_settings_fp apply,
-                                enum argument start,
-                                enum argument end) {
-    enum argument it = start;
+                                enum category cat,
+                                const char *given) {
+    const enum argument end = get_end(cat);
+    enum argument it = get_start(cat);
 
     while (++it < end) {
         const char *flag_string = get_flag_string(it);
         bool found_argument = strncmp(given, flag_string, FLAG_CAP) == 0;
+        int *settings_field = get_settings_field(settings, cat);
 
         if (found_argument) {
-            apply(settings, it);
+            if (settings_field != NULL) {
+                *settings_field = (int) get_base_enum(it);
+            }
             break;
         }
     }
 
     return it;
 }
-
-static void apply_print_mode(settings_t *settings, enum argument arg) {
-    settings->print_mode = get_base_enum(arg);
-}
-
-static void apply_misc_option(settings_t *settings, enum argument arg) {
-    (void) settings;
-    (void) arg;
-    /* do nothing */
-}
-
-static void apply_query_option(settings_t *settings, enum argument arg) {
-    settings->strategy = get_base_enum(arg);
-}
-
-static change_settings_fp get_setter(enum category catagory) {
-    ASSERT(is_category(catagory));
-
-    static const change_settings_fp setters[] = {
-        [PRINT_FLAGS] = &apply_print_mode,
-        [QUERY_FLAGS] = &apply_query_option,
-        [MISC_FLAGS] = &apply_misc_option
-    };
-    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, setters), missing_parsing_impl);
-
-    return setters[catagory];
-}
-
-
 enum error parse_arguments(settings_t *settings, int argc, char **argv) {
     for (int idx = 1; idx < argc; idx++) {
         bool is_flag;
@@ -84,8 +67,7 @@ enum error parse_arguments(settings_t *settings, int argc, char **argv) {
         }
 
         for (enum category c = 0; c < NUM_CATEGORIES; c++) {
-            enum argument arg = set_option(settings, argv[idx], get_setter(c),
-                                           get_start(c), get_end(c));
+            enum argument arg = set_option(settings, c, argv[idx]);
 
             is_flag = is_category_member(arg, c);
 
