@@ -45,7 +45,7 @@ const char *get_description(enum arguments argument) {
 enum arguments get_start(enum catagory catagory) {
     ASSERT(is_catagory(catagory));
 
-    enum arguments start_values[] = {
+    const enum arguments start_values[] = {
         [PRINT_FLAGS] = START_PRINT_FLAGS,
         [QUERY_FLAGS] = START_QUERY_FLAGS,
         [MISC_FLAGS] = START_MISC_FLAGS
@@ -59,7 +59,7 @@ enum arguments get_start(enum catagory catagory) {
 enum arguments get_end(enum catagory catagory) {
     ASSERT(is_catagory(catagory));
 
-    enum arguments end_values[] = {
+    const enum arguments end_values[] = {
         [PRINT_FLAGS] = END_PRINT_FLAGS,
         [QUERY_FLAGS] = END_QUERY_FLAGS,
         [MISC_FLAGS] = END_MISC_FLAGS
@@ -75,5 +75,5 @@ bool is_catagory_member(enum arguments a, enum catagory c) {
 }
 
 bool is_catagory(int c) {
-    return 0 <= c && c < NUM_ARGUMENTS;
+    return 0 <= c && c < NUM_CATEGORIES;
 }
