@@ -93,5 +93,5 @@ int get_base_enum(enum argument bounded) {
 
     return start == 0
         ? bounded - 1
-        : bounded - start;
+        : bounded - start - 1;
 }
