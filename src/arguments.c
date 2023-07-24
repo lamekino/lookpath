@@ -89,5 +89,9 @@ static enum category get_catagory(enum argument a) {
 }
 
 int get_base_enum(enum argument bounded) {
-    return bounded - get_start(get_catagory(bounded));
+    int start = get_start(get_catagory(bounded));
+
+    return start == 0
+        ? bounded - 1
+        : bounded - start;
 }

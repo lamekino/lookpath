@@ -46,7 +46,7 @@ static enum argument set_option(settings_t *settings,
 }
 
 static void apply_print_mode(settings_t *settings, enum argument arg) {
-    settings->print_mode = (enum print_mode) (arg - START_PRINT_FLAGS - 1);
+    settings->print_mode = get_base_enum(arg);
 }
 
 static void apply_misc_option(settings_t *settings, enum argument arg) {
@@ -56,7 +56,7 @@ static void apply_misc_option(settings_t *settings, enum argument arg) {
 }
 
 static void apply_query_option(settings_t *settings, enum argument arg) {
-    settings->strategy = (enum search_methods) (arg - START_QUERY_FLAGS);
+    settings->strategy = get_base_enum(arg);
 }
 
 static change_settings_fp get_setter(enum category catagory) {
@@ -85,7 +85,7 @@ enum error parse_arguments(settings_t *settings, int argc, char **argv) {
 
         for (enum category c = 0; c < NUM_CATEGORIES; c++) {
             enum argument arg = set_option(settings, argv[idx], get_setter(c),
-                                            get_start(c), get_end(c));
+                                           get_start(c), get_end(c));
 
             is_flag = is_category_member(arg, c);
 
