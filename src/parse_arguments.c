@@ -58,6 +58,7 @@ static enum argument set_option(settings_t *settings,
      * is_category_member() will return false */
     return it;
 }
+
 enum error parse_arguments(settings_t *settings, int argc, char **argv) {
     for (int idx = 1; idx < argc; idx++) {
         bool is_flag;
