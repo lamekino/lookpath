@@ -6,9 +6,9 @@
 #include "arguments.h"
 
 static void list_flags(const char *title,
-                       enum arguments start,
-                       enum arguments end) {
-    enum arguments it = start;
+                       enum argument start,
+                       enum argument end) {
+    enum argument it = start;
     printf("  %s:\n", title);
     while (++it < end) {
         printf("    %s:  %s\n", get_argument(it), get_description(it));

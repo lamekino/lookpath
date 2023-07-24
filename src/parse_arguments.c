@@ -13,7 +13,7 @@
 
 #define FLAG_CAP 2
 
-typedef void (*change_settings_fp)(settings_t *, enum arguments);
+typedef void (*change_settings_fp)(settings_t *, enum argument);
 
 static bool set_pattern(settings_t *settings, char *given) {
     if (given[0] == '-') {
@@ -25,15 +25,15 @@ static bool set_pattern(settings_t *settings, char *given) {
     return true;
 }
 
-static enum arguments set_option(settings_t *settings,
+static enum argument set_option(settings_t *settings,
                                  const char *given,
                                  change_settings_fp apply,
-                                 enum arguments start,
-                                 enum arguments end) {
-    enum arguments it = start;
+                                 enum argument start,
+                                 enum argument end) {
+    enum argument it = start;
 
     while (++it < end) {
-        if (strncmp(given, get_argument((enum arguments) it), FLAG_CAP) == 0) {
+        if (strncmp(given, get_argument((enum argument) it), FLAG_CAP) == 0) {
             apply(settings, it);
             break;
         }
@@ -42,17 +42,17 @@ static enum arguments set_option(settings_t *settings,
     return it;
 }
 
-static void apply_print_mode(settings_t *settings, enum arguments arg) {
+static void apply_print_mode(settings_t *settings, enum argument arg) {
     settings->print_mode = (enum print_mode) (arg - START_PRINT_FLAGS - 1);
 }
 
-static void apply_misc_option(settings_t *settings, enum arguments arg) {
+static void apply_misc_option(settings_t *settings, enum argument arg) {
     (void) settings;
     (void) arg;
     /* do nothing */
 }
 
-static void apply_query_option(settings_t *settings, enum arguments arg) {
+static void apply_query_option(settings_t *settings, enum argument arg) {
     settings->strategy = (enum search_methods) (arg - START_QUERY_FLAGS);
 }
 
@@ -81,7 +81,7 @@ enum error parse_arguments(settings_t *settings, int argc, char **argv) {
         }
 
         for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
-            enum arguments arg = set_option(settings, argv[idx], get_setter(c),
+            enum argument arg = set_option(settings, argv[idx], get_setter(c),
                                             get_start(c), get_end(c));
 
             is_flag = is_catagory_member(arg, c);

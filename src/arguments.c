@@ -4,7 +4,7 @@
 #include "debug_assert.h"
 
 #ifdef DEBUG
-void assert_catagory(enum arguments arg) {
+void assert_catagory(enum argument arg) {
     bool is_member = false;
     for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
         is_member |= is_catagory_member(arg, c);
@@ -17,7 +17,7 @@ void assert_catagory(enum arguments arg) {
 #define ASSERT_IN_CATEGORY(_)
 #endif
 
-const char *get_argument(enum arguments argument) {
+const char *get_argument(enum argument argument) {
     ASSERT_IN_CATEGORY(argument);
 
     const char *flags[] = {
@@ -30,7 +30,7 @@ const char *get_argument(enum arguments argument) {
     return argument[flags];
 }
 
-const char *get_description(enum arguments argument) {
+const char *get_description(enum argument argument) {
     ASSERT_IN_CATEGORY(argument);
 
     const char *descriptions[] = {
@@ -42,10 +42,10 @@ const char *get_description(enum arguments argument) {
     return argument[descriptions];
 }
 
-enum arguments get_start(enum catagory catagory) {
+enum argument get_start(enum catagory catagory) {
     ASSERT(is_catagory(catagory));
 
-    const enum arguments start_values[] = {
+    const enum argument start_values[] = {
         [PRINT_FLAGS] = START_PRINT_FLAGS,
         [QUERY_FLAGS] = START_QUERY_FLAGS,
         [MISC_FLAGS] = START_MISC_FLAGS
@@ -56,10 +56,10 @@ enum arguments get_start(enum catagory catagory) {
     return start_values[catagory];
 }
 
-enum arguments get_end(enum catagory catagory) {
+enum argument get_end(enum catagory catagory) {
     ASSERT(is_catagory(catagory));
 
-    const enum arguments end_values[] = {
+    const enum argument end_values[] = {
         [PRINT_FLAGS] = END_PRINT_FLAGS,
         [QUERY_FLAGS] = END_QUERY_FLAGS,
         [MISC_FLAGS] = END_MISC_FLAGS
@@ -69,7 +69,7 @@ enum arguments get_end(enum catagory catagory) {
     return end_values[catagory];
 }
 
-bool is_catagory_member(enum arguments a, enum catagory c) {
+bool is_catagory_member(enum argument a, enum catagory c) {
     return get_start(c) < a && a < get_end(c);
 }
 

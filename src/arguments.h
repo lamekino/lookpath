@@ -39,7 +39,7 @@ enum catagory {
 
 #define COUNT_FLAGS(...) +1
 
-enum arguments {
+enum argument {
 #define FLAG_ENUM(label, ...) FLAG_##label,
 #define BOUNDED_ENUM(xs) START_##xs, xs(FLAG_ENUM) END_##xs
     BOUNDED_ENUM(PRINT_FLAGS),
@@ -63,15 +63,16 @@ STATIC_ASSERT(NUM_ARGUMENTS == NUM_FLAGS,
 #define IS_LENGTH(bound, arr) \
     (sizeof((arr))/sizeof(*(arr)) == bound)
 
-const char *get_argument(enum arguments argument);
-const char *get_description(enum arguments argument);
+const char *get_argument(enum argument argument);
+const char *get_description(enum argument argument);
 
-enum arguments get_start(enum catagory catagory);
-enum arguments get_end(enum catagory catagory);
+enum argument get_start(enum catagory catagory);
+enum argument get_end(enum catagory catagory);
+enum argument get_base_enum(enum argument bounded);
 
-bool is_print_arg(enum arguments a);
-bool is_query_arg(enum arguments a);
-bool is_misc_arg(enum arguments a);
-bool is_catagory_member(enum arguments a, enum catagory c);
+bool is_print_arg(enum argument a);
+bool is_query_arg(enum argument a);
+bool is_misc_arg(enum argument a);
+bool is_catagory_member(enum argument a, enum catagory c);
 bool is_catagory(int c);
 #endif
