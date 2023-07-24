@@ -31,7 +31,7 @@ int what_happened(enum error code, const char *prog_name) {
     case DOUBLE_PATTERN:
         fprintf(stderr, "can only take one pattern, quitting\n");
         break;
-    case NO_PATTERN:
+    case MISSING_PATTERN:
         fprintf(stderr, "no pattern provided in arguments\n");
         break;
     case SHOW_USAGE:

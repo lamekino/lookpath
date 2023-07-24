@@ -10,7 +10,7 @@ enum error {
     INSUFFICIENT_ARGS,
     WRONG_ARGS,
     DOUBLE_PATTERN,
-    NO_PATTERN,
+    MISSING_PATTERN,
     SHOW_USAGE,
 
     NO_ERROR = 0
