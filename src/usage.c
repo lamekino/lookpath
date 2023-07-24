@@ -11,7 +11,7 @@ static void list_flags(const char *title,
     enum argument it = start;
     printf("  %s:\n", title);
     while (++it < end) {
-        printf("    %s:  %s\n", get_argument(it), get_description(it));
+        printf("    %s:  %s\n", get_flag_string(it), get_description(it));
     }
 
 }

@@ -63,7 +63,7 @@ STATIC_ASSERT(NUM_ARGUMENTS == NUM_FLAGS,
 #define IS_LENGTH(bound, arr) \
     (sizeof((arr))/sizeof(*(arr)) == bound)
 
-const char *get_argument(enum argument argument);
+const char *get_flag_string(enum argument argument);
 const char *get_description(enum argument argument);
 
 enum argument get_start(enum catagory catagory);

@@ -17,7 +17,7 @@ void assert_catagory(enum argument arg) {
 #define ASSERT_IN_CATEGORY(_)
 #endif
 
-const char *get_argument(enum argument argument) {
+const char *get_flag_string(enum argument argument) {
     ASSERT_IN_CATEGORY(argument);
 
     const char *flags[] = {

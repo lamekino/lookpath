@@ -26,14 +26,17 @@ static bool set_pattern(settings_t *settings, char *given) {
 }
 
 static enum argument set_option(settings_t *settings,
-                                 const char *given,
-                                 change_settings_fp apply,
-                                 enum argument start,
-                                 enum argument end) {
+                                const char *given,
+                                change_settings_fp apply,
+                                enum argument start,
+                                enum argument end) {
     enum argument it = start;
 
     while (++it < end) {
-        if (strncmp(given, get_argument((enum argument) it), FLAG_CAP) == 0) {
+        const char *flag_string = get_flag_string(it);
+        bool found_argument = strncmp(given, flag_string, FLAG_CAP) == 0;
+
+        if (found_argument) {
             apply(settings, it);
             break;
         }
