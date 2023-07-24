@@ -64,7 +64,7 @@ static change_settings_fp get_setter(enum catagory catagory) {
         [QUERY_FLAGS] = &apply_query_option,
         [MISC_FLAGS] = &apply_misc_option
     };
-    STATIC_ASSERT(sizeof(setters)/sizeof(setters[0]) == NUM_CATEGORIES,
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, setters),
             missing_parsing_impl);
 
     return setters[catagory];

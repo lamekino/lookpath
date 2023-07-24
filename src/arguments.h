@@ -1,8 +1,9 @@
 #ifndef ARGUMENTS_H
 #define ARGUMENTS_H
 
-#include "debug_assert.h"
 #include <stdbool.h>
+
+#include "debug_assert.h"
 
 enum catagory {
     PRINT_FLAGS,
@@ -37,7 +38,6 @@ enum catagory {
     MISC_FLAGS(X)
 
 #define COUNT_FLAGS(...) +1
-#define NUM_FLAGS ALL_FLAGS(COUNT_FLAGS)
 
 enum arguments {
 #define FLAG_ENUM(label, ...) FLAG_##label,
@@ -50,12 +50,18 @@ enum arguments {
     ARGUEMENTS_LEN
 };
 
+#define NUM_FLAGS ALL_FLAGS(COUNT_FLAGS)
 #define NUM_ARGUMENTS (ARGUEMENTS_LEN - 2 * NUM_CATEGORIES)
 
 /* ensure that the number of bounded argument equals the number of defined flags
  * at compile time */
 STATIC_ASSERT(NUM_ARGUMENTS == NUM_FLAGS,
         missing_argument_in_bounded_enum);
+
+#undef NUM_FLAGS
+
+#define IS_LENGTH(bound, arr) \
+    (sizeof((arr))/sizeof(*(arr)) == bound)
 
 const char *get_argument(enum arguments argument);
 const char *get_description(enum arguments argument);
