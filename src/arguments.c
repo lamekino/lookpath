@@ -7,7 +7,7 @@
 void assert_catagory(enum argument arg) {
     bool is_member = false;
     for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
-        is_member |= is_catagory_member(arg, c);
+        is_member |= is_category_member(arg, c);
     }
 
     assert(is_member);
@@ -43,7 +43,7 @@ const char *get_description(enum argument argument) {
 }
 
 enum argument get_start(enum catagory catagory) {
-    ASSERT(is_catagory(catagory));
+    ASSERT(is_category(catagory));
 
     const enum argument start_values[] = {
         [PRINT_FLAGS] = START_PRINT_FLAGS,
@@ -57,7 +57,7 @@ enum argument get_start(enum catagory catagory) {
 }
 
 enum argument get_end(enum catagory catagory) {
-    ASSERT(is_catagory(catagory));
+    ASSERT(is_category(catagory));
 
     const enum argument end_values[] = {
         [PRINT_FLAGS] = END_PRINT_FLAGS,
@@ -69,10 +69,10 @@ enum argument get_end(enum catagory catagory) {
     return end_values[catagory];
 }
 
-bool is_catagory_member(enum argument a, enum catagory c) {
+bool is_category_member(enum argument a, enum catagory c) {
     return get_start(c) < a && a < get_end(c);
 }
 
-bool is_catagory(int c) {
+bool is_category(int c) {
     return 0 <= c && c < NUM_CATEGORIES;
 }

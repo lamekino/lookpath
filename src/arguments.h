@@ -73,6 +73,6 @@ enum argument get_base_enum(enum argument bounded);
 bool is_print_arg(enum argument a);
 bool is_query_arg(enum argument a);
 bool is_misc_arg(enum argument a);
-bool is_catagory_member(enum argument a, enum catagory c);
-bool is_catagory(int c);
+bool is_category_member(enum argument a, enum catagory c);
+bool is_category(int c);
 #endif

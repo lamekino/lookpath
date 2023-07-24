@@ -60,7 +60,7 @@ static void apply_query_option(settings_t *settings, enum argument arg) {
 }
 
 static change_settings_fp get_setter(enum catagory catagory) {
-    ASSERT(is_catagory(catagory));
+    ASSERT(is_category(catagory));
 
     static const change_settings_fp setters[] = {
         [PRINT_FLAGS] = &apply_print_mode,
@@ -87,7 +87,7 @@ enum error parse_arguments(settings_t *settings, int argc, char **argv) {
             enum argument arg = set_option(settings, argv[idx], get_setter(c),
                                             get_start(c), get_end(c));
 
-            is_flag = is_catagory_member(arg, c);
+            is_flag = is_category_member(arg, c);
 
             if (!is_flag) continue;
             if (arg == FLAG_HELP) return SHOW_USAGE;
