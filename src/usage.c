@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "debug_assert.h"
 #include "parse_arguments.h"
 #include "usage.h"
 #include "arguments.h"
@@ -16,11 +17,17 @@ static void list_flags(const char *title,
 }
 
 void usage(const char *prog_name) {
-    enum arguments it;
-
     printf("%s:\n", prog_name);
 
-    list_flags("display options", START_PRINT_FLAGS, END_PRINT_FLAGS);
-    list_flags("query options", START_QUERY_FLAGS, END_QUERY_FLAGS);
-    list_flags("miscellaneous", START_MISC_FLAGS, END_MISC_FLAGS);
+    const char *titles[] = {
+        [PRINT_FLAGS] = "display options",
+        [QUERY_FLAGS] = "query options",
+        [MISC_FLAGS] = "miscellaneous"
+    };
+    STATIC_ASSERT(sizeof(titles)/sizeof(titles[0]) == NUM_CATEGORIES,
+                missing_usage_title);
+
+    for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
+        list_flags(titles[c], get_start(c), get_end(c));
+    }
 }
