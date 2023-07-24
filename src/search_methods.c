@@ -101,8 +101,7 @@ search_method_fp get_matcher(enum search_methods strategy) {
         [LEFT_TO_RIGHT] = &matches_pattern,
         [RIGHT_TO_LEFT] = &matches_pattern_reverse
     };
-    STATIC_ASSERT(IS_LENGTH(NUM_SEARCH_METHODS, methods),
-            missing_matcher_impl);
+    STATIC_ASSERT(IS_LENGTH(NUM_SEARCH_METHODS, methods), missing_matcher_impl);
 
     return methods[strategy];
 }

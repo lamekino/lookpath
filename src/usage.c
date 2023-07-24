@@ -24,8 +24,7 @@ void usage(const char *prog_name) {
         [QUERY_FLAGS] = "query options",
         [MISC_FLAGS] = "miscellaneous"
     };
-    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, titles),
-                missing_usage_title);
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, titles), missing_usage_title);
 
     for (enum catagory c = 0; c < NUM_CATEGORIES; c++) {
         list_flags(titles[c], get_start(c), get_end(c));

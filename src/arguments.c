@@ -64,8 +64,7 @@ enum arguments get_end(enum catagory catagory) {
         [QUERY_FLAGS] = END_QUERY_FLAGS,
         [MISC_FLAGS] = END_MISC_FLAGS
     };
-    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, end_values),
-            missing_get_end_value);
+    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, end_values), missing_get_end_value);
 
     return end_values[catagory];
 }

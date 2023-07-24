@@ -110,8 +110,7 @@ print_mode_fp get_print_mode(enum print_mode pm) {
 
     ASSERT(0 <= pm && pm < NUM_PRINT_MODES);
     STATIC_ASSERT(IS_LENGTH(NUM_PRINT_MODES, printers),
-        missing_print_mode_impl
-    );
+        missing_print_mode_impl);
 
     return printers[pm];
 }
