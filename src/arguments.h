@@ -65,14 +65,16 @@ STATIC_ASSERT(NUM_ARGUMENTS == NUM_FLAGS,
 
 const char *get_flag_string(enum argument argument);
 const char *get_description(enum argument argument);
+#if 0
+/* TODO: */
+const char *get_flag_full(enum argument argument); /* --flag-name */
+const char *get_flag_terse(enum argument argument); /* -f */
+#endif
 
 enum argument get_start(enum catagory catagory);
 enum argument get_end(enum catagory catagory);
 enum argument get_base_enum(enum argument bounded);
 
-bool is_print_arg(enum argument a);
-bool is_query_arg(enum argument a);
-bool is_misc_arg(enum argument a);
 bool is_category_member(enum argument a, enum catagory c);
 bool is_category(int c);
 #endif
