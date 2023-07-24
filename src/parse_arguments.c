@@ -27,7 +27,7 @@ static bool set_pattern(settings_t *settings, char *given) {
 
 static enum argument set_option(settings_t *settings,
                                 const char *given,
-                                change_settings_fp apply,
+                                const change_settings_fp apply,
                                 enum argument start,
                                 enum argument end) {
     enum argument it = start;
