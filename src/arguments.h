@@ -21,8 +21,10 @@ enum category {
 
     QUERY_FLAGS,
 #define QUERY_FLAGS(X) \
-    X(REVERSE_SEARCH, "-r", \
-        "search from right to left instead of left to right")
+    X(LEFT_TO_RIGHT_SEARCH, "-L", \
+        "search from left to right (default)") \
+    X(RIGHT_TO_LEFT_SEARCH, "-r", \
+        "search from right to left")
 
     MISC_FLAGS,
 #define MISC_FLAGS(X) \
