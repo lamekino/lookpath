@@ -43,10 +43,10 @@ static enum argument set_option(settings_t *settings,
 
     while (++it < end) {
         const char *flag_string = get_flag_string(it);
-        bool found_argument = strncmp(given, flag_string, FLAG_CAP) == 0;
-        int *settings_field = get_settings_field(settings, category);
 
-        if (found_argument) {
+        if (strncmp(given, flag_string, FLAG_CAP) == 0) {
+            int *settings_field = get_settings_field(settings, category);
+
             if (settings_field != NULL) {
                 *settings_field = get_base_enum(it);
             }
@@ -54,6 +54,8 @@ static enum argument set_option(settings_t *settings,
         }
     }
 
+    /* if no matches are found, then the iterator will be set to END_*, meaning
+     * is_category_member() will return false */
     return it;
 }
 enum error parse_arguments(settings_t *settings, int argc, char **argv) {
