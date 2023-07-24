@@ -7,7 +7,7 @@
 #ifdef DEBUG
 #define ASSERT(p) assert((p))
 #else
-#define ASSERT(_)
+#define ASSERT(...)
 #endif
 
 #endif
