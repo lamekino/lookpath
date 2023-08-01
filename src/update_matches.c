@@ -50,12 +50,13 @@ size_t update_matches(size_t head_cursor,
         return head_cursor;
     }
 
+    /* TODO: look into scandir(3) */
     while ((entry = readdir(dir))) {
         if (has_matches(entry->d_name, pattern, pattern_len)) {
             int tail_cursor =
                 add_to_matchlist(matches_list, head_cursor, entry->d_name);
 
-            /* TODO: ehehhehhhh */
+            /* FIXME: error expects integer value but this return is unsigned */
             if (HAS_ERROR(tail_cursor)) {
                 closedir(dir);
                 return tail_cursor;
