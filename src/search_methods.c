@@ -22,8 +22,11 @@ typedef uint8_t packed_t;
 typedef uint64_t packed_t;
 #endif
 
+typedef int (*transform_fp)(int);
+
 static bool matches_pattern(const char *fname,
                             const char *pattern,
+                            const transform_fp transform,
                             size_t pattern_len) {
     size_t window = sizeof(packed_t) * BITS;
 
@@ -33,8 +36,8 @@ static bool matches_pattern(const char *fname,
         window = MIN(window, pattern_len - pos);
 
         for (size_t view = 0; view < window; view++) {
-            const char view_fname = fname[pos + view];
-            const char view_pattern = pattern[pos + view];
+            const char view_fname = transform(fname[pos + view]);
+            const char view_pattern = transform(pattern[pos + view]);
 
             if (view_fname == '\0') {
                 return false;
@@ -53,6 +56,7 @@ static bool matches_pattern(const char *fname,
 
 static bool matches_pattern_reverse(const char *fname,
                                     const char *pattern,
+                                    const transform_fp transform,
                                     size_t pattern_len) {
     const char *cursor_pattern, *cursor_fname;
 
@@ -75,8 +79,8 @@ static bool matches_pattern_reverse(const char *fname,
 
         for (size_t view = 0; view < window; view++) {
             /* look backwards in the tail of the list */
-            const char view_fname = cursor_fname[-view];
-            const char view_pattern = cursor_pattern[-view];
+            const char view_fname = transform(cursor_fname[-view]);
+            const char view_pattern = transform(cursor_pattern[-view]);
 
             PACK(has_duplicate, view_fname, view_pattern, view);
         }
@@ -93,13 +97,23 @@ static bool matches_pattern_reverse(const char *fname,
     return true;
 }
 
+static search_method_fp lower_case_version(enum search_methods sm) {
+    switch (sm) {
+        case SM_LEFT_TO_RIGHT: break;
+        case SM_RIGHT_TO_LEFT: break;
+        default: ASSERT(0 && "unreachable");
+    }
+
+    return NULL;
+}
 
 search_method_fp get_matcher(enum search_methods strategy) {
     ASSERT(0 <= strategy && strategy < NUM_SEARCH_METHODS);
 
     const search_method_fp methods[] = {
         [SM_LEFT_TO_RIGHT] = &matches_pattern,
-        [SM_RIGHT_TO_LEFT] = &matches_pattern_reverse
+        [SM_RIGHT_TO_LEFT] = &matches_pattern_reverse,
+        [SM_CASE_INSENSITIVE] = NULL;
     };
     STATIC_ASSERT(IS_LENGTH(NUM_SEARCH_METHODS, methods), missing_matcher_impl);
 

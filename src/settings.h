@@ -8,8 +8,11 @@
 #include "search_methods.h"
 
 typedef struct {
+    bool case_insensitive;
+
     enum print_mode print_mode;
     enum search_methods strategy;
+
     char *pattern;
     size_t pattern_len;
 } settings_t;

@@ -24,7 +24,9 @@ enum category {
     X(LEFT_TO_RIGHT, "-L", \
         "search from left to right (default)") \
     X(RIGHT_TO_LEFT, "-r", \
-        "search from right to left")
+        "search from right to left") \
+    X(CASE_INSENSITIVE, "-i", \
+        "ignore filename case")
 
     MISC_FLAGS,
 #define MISC_FLAGS(X) \
