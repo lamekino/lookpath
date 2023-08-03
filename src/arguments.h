@@ -77,6 +77,8 @@ const char *get_flag_terse(enum argument argument); /* -f */
 
 enum argument get_start(enum category catagory);
 enum argument get_end(enum category catagory);
+enum argument get_first(enum category category);
+enum argument get_last(enum category category);
 
 int get_base_enum(enum argument bounded);
 

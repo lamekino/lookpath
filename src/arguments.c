@@ -69,6 +69,14 @@ enum argument get_end(enum category catagory) {
     return end_values[catagory];
 }
 
+enum argument get_first(enum category category) {
+    return get_start(category) + 1;
+}
+
+enum argument get_last(enum category category) {
+    return get_end(category) - 1;
+}
+
 bool is_category_member(enum argument a, enum category c) {
     return get_start(c) < a && a < get_end(c);
 }
