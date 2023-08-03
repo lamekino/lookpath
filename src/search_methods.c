@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -6,21 +7,12 @@
 #include "arguments.h"
 #include "debug_assert.h"
 #include "limits.h"
+#include "settings.h"
 
 #define BITS (size_t) 8
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define PACK(dst, a, b, offset) \
     (dst) |= ((uint8_t) ((a) ^ (b)) != 0) << offset
-
-#if defined(USE_UINT32_T)
-typedef uint32_t packed_t;
-#elif defined(USE_UINT16_T)
-typedef uint16_t packed_t;
-#elif defined(USE_UINT8_T)
-typedef uint8_t packed_t;
-#else
-typedef uint64_t packed_t;
-#endif
 
 typedef int (*transform_fp)(int);
 
@@ -97,26 +89,48 @@ static bool matches_pattern_reverse(const char *fname,
     return true;
 }
 
-static search_method_fp lower_case_version(enum search_methods sm) {
-    switch (sm) {
-        case SM_LEFT_TO_RIGHT: break;
-        case SM_RIGHT_TO_LEFT: break;
-        default: ASSERT(0 && "unreachable");
+static bool insensitive_forward_search(const char *fname,
+                                       const char *pattern,
+                                       size_t pattern_len) {
+    return matches_pattern(fname, pattern, &tolower, pattern_len);
+}
+
+static bool insensitive_reverse_search(const char *fname,
+                                       const char *pattern,
+                                       size_t pattern_len) {
+    return matches_pattern_reverse(fname, pattern, &tolower, pattern_len);
+}
+
+static int id(int x) {
+    return x;
+}
+
+static bool sensitive_forward_search(const char *fname,
+                                    const char *pattern,
+                                    size_t pattern_len) {
+    return matches_pattern(fname, pattern, &id, pattern_len);
+}
+
+static bool sensitive_reverse_search(const char *fname,
+                                    const char *pattern,
+                                    size_t pattern_len) {
+    return matches_pattern_reverse(fname, pattern, &id, pattern_len);
+}
+
+search_method_fp get_matcher(const packed_t qmask) {
+    switch (qmask) {
+        case EMPTY_MASK:
+        case MASK(SM_LEFT_TO_RIGHT):
+            return &sensitive_forward_search;
+        case MASK(SM_CASE_INSENSITIVE):
+        case MASK(SM_CASE_INSENSITIVE) | MASK(SM_LEFT_TO_RIGHT):
+            return &insensitive_forward_search;
+        case MASK(SM_RIGHT_TO_LEFT):
+            return &sensitive_reverse_search;
+        case MASK(SM_CASE_INSENSITIVE) | MASK(SM_RIGHT_TO_LEFT):
+            return &insensitive_reverse_search;
+        default:
+            ASSERT(0 && "unreachable");
+            return &sensitive_forward_search;
     }
-
-    return NULL;
 }
-
-search_method_fp get_matcher(enum search_methods strategy) {
-    ASSERT(0 <= strategy && strategy < NUM_SEARCH_METHODS);
-
-    const search_method_fp methods[] = {
-        [SM_LEFT_TO_RIGHT] = &matches_pattern,
-        [SM_RIGHT_TO_LEFT] = &matches_pattern_reverse,
-        [SM_CASE_INSENSITIVE] = NULL;
-    };
-    STATIC_ASSERT(IS_LENGTH(NUM_SEARCH_METHODS, methods), missing_matcher_impl);
-
-    return methods[strategy];
-}
-

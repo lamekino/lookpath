@@ -7,6 +7,7 @@
 #include "debug_assert.h"
 #include "errors.h"
 #include "parse_arguments.h"
+#include "print_modes.h"
 #include "search_methods.h"
 #include "settings.h"
 #include "usage.h"
@@ -23,16 +24,60 @@ static bool set_pattern(settings_t *settings, char *given) {
     return true;
 }
 
-static int *get_settings_field(const settings_t *settings,
-                               enum category c) {
-    int *fields[] = {
-        [PRINT_FLAGS] = (int *) &settings->print_mode,
-        [QUERY_FLAGS] = (int *) &settings->strategy,
-        [MISC_FLAGS] = NULL
-    };
-    STATIC_ASSERT(IS_LENGTH(NUM_CATEGORIES, fields), missing_settings_field);
+#if 0
+typedef int *(*get_field_fp)(const settings_t *, enum argument);
 
-    return fields[c];
+static int *get_print_field(const settings_t *settings, enum argument a) {
+    (void) a;
+    return (int *) settings->print_mode;
+}
+
+static int *get_query_field(const settings_t *settings, enum argument a) {
+    if (a == FLAG_CASE_INSENSITIVE) return NULL;
+    return (int *) settings->strategy;
+}
+
+static int *get_misc_field(const settings_t *settings, enum argument a) {
+    (void) settings;
+    (void) a;
+    return NULL;
+}
+#endif
+
+static int *get_settings_field(const settings_t *settings,
+                               enum argument a) {
+#define F(label) FLAG_##label
+
+#define CASE(label, block) \
+    do { \
+        case F(label): block \
+    } while (0);
+
+#define CASE_PRINT(label, ...) \
+    CASE(label, { return (int *) settings->print_mode; })
+
+#define CASE_QUERY(label, ...) \
+    CASE(label, { return NULL; })
+
+#define CASE_MISC(label, ...) \
+    CASE(label, { return NULL; })
+
+    /* TODO: convert to jump table and assert length at compile time */
+    switch (a) {
+        PRINT_FLAGS(CASE_PRINT)
+        QUERY_FLAGS(CASE_QUERY)
+        MISC_FLAGS(CASE_MISC)
+        default: break;
+    }
+
+#undef CASE_PRINT
+#undef CASE_QUERY
+#undef CASE_MISC
+#undef CASE
+#undef F
+
+    ASSERT(0 && "unreachable");
+    return NULL;
 }
 
 static enum argument set_option(settings_t *settings,
@@ -45,11 +90,13 @@ static enum argument set_option(settings_t *settings,
         const char *flag_string = get_flag_string(it);
 
         if (strncmp(given, flag_string, FLAG_CAP) == 0) {
-            int *settings_field = get_settings_field(settings, category);
+            int *settings_field = get_settings_field(settings, it);
 
             if (settings_field != NULL) {
                 *settings_field = get_base_enum(it);
             }
+
+            settings->mask[category] |= MASK(get_base_enum(it));
             break;
         }
     }

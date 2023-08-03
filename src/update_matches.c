@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <limits.h>
 
+#include "arguments.h"
 #include "debug_assert.h"
 #include "search_methods.h"
 #include "update_matches.h"
@@ -40,7 +41,8 @@ size_t update_matches(size_t head_cursor,
                       const char *path) {
     const char *pattern = settings->pattern;
     const size_t pattern_len = settings->pattern_len;
-    const search_method_fp has_matches = get_matcher(settings->strategy);
+    const search_method_fp has_matches =
+        get_matcher(settings->mask[QUERY_FLAGS]);
 
     DIR *dir = opendir(path);
     struct dirent *entry = NULL;
