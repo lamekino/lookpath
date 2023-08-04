@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <wchar.h>
 
+#include "bits.h"
 #include "print_modes.h"
 #include "arguments.h"
 #include "debug_assert.h"
@@ -99,7 +100,7 @@ static void print_as_sorted_tree(const tagged_list *tags) {
     fwide(stdout, -1);
 }
 
-print_mode_fp get_print_mode(enum print_mode pm) {
+print_mode_fp get_print_mode(const packed_t pmask) {
     const print_mode_fp printers[] = {
         [PM_SORTED] = &print_as_sorted,
         [PM_FULL_PATH] = &print_as_full_path,
@@ -108,9 +109,16 @@ print_mode_fp get_print_mode(enum print_mode pm) {
         [PM_TREE_SORTED] = &print_as_sorted_tree,
     };
 
-    ASSERT(0 <= pm && pm < NUM_PRINT_MODES);
     STATIC_ASSERT(IS_LENGTH(NUM_PRINT_MODES, printers),
         missing_print_mode_impl);
 
-    return printers[pm];
+    switch (pmask) {
+        case EMPTY_MASK: return printers[0];
+#define CASE(label, ...) case MASK(PM_##label): return printers[PM_##label];
+        PRINT_FLAGS(CASE)
+#undef CASE
+        default: break;
+    }
+    fprintf(stderr, "multiple flags entered, using -S mode\n");
+    return &print_as_sorted;
 }

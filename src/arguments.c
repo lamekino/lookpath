@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdbool.h>
 
 #include "arguments.h"
@@ -77,6 +78,18 @@ enum argument get_last(enum category category) {
     return get_end(category) - 1;
 }
 
+enum argument validate_arg(const char *arg) {
+    /* FIXME: this can be faster */
+#define FLAG_STRINGS(label, flag, _) \
+    do { \
+        if (strncmp(arg, flag, 2) == 0) return FLAG_##label; \
+    } while (0);
+    ALL_FLAGS(FLAG_STRINGS)
+#undef FLAG_STRINGS
+
+    return -1;
+}
+
 bool is_category_member(enum argument a, enum category c) {
     return get_start(c) < a && a < get_end(c);
 }
@@ -85,7 +98,11 @@ bool is_category(int c) {
     return 0 <= c && c < NUM_CATEGORIES;
 }
 
-static enum category get_catagory(enum argument a) {
+bool is_bounded(enum argument a) {
+    return get_start(0) < a && a < get_end(NUM_CATEGORIES - 1);
+}
+
+enum category get_catagory(enum argument a) {
     for (enum category c = 0; c < NUM_CATEGORIES; c++) {
         if (is_category_member(a, c)) {
             return c;
