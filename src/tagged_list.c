@@ -58,5 +58,5 @@ void clear_tags(tagged_list *t) {
 
 bool has_matches(const struct tag *tag) {
     /* when no matches in tag, length == position */
-    return tag->length != tag->position;
+    return tag != NULL && tag->length != tag->position;
 }

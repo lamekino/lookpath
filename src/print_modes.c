@@ -23,7 +23,7 @@ static void print_as_sorted(const tagged_list *tags) {
 
 static void print_as_full_path(const tagged_list *tags) {
     struct tag *it;
-    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+    for (it = tags->tags; it < &tags->tags[tags->num_tags]; it++) {
         /* when no matches in tag, length == position */
         for (size_t idx = it->position; idx < it->length; idx++) {
             printf("%s/%s\n", it->name, tags->strings[idx]);
@@ -33,7 +33,7 @@ static void print_as_full_path(const tagged_list *tags) {
 
 static void print_as_sorted_full_path(const tagged_list *tags) {
     struct tag *it;
-    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+    for (it = tags->tags; it < &tags->tags[tags->num_tags]; it++) {
         qsort(&tags->strings[it->position],
                 it->length - it->position,
                 sizeof(char *),
@@ -52,7 +52,7 @@ static void print_as_tree(const tagged_list *tags) {
     struct tag *it;
 
     fwide(stdout, 1);
-    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+    for (it = tags->tags; it < &tags->tags[tags->num_tags]; it++) {
         if (!has_matches(it)) {
             continue;
         }
@@ -77,7 +77,7 @@ static void print_as_sorted_tree(const tagged_list *tags) {
     struct tag *it;
 
     fwide(stdout, 1);
-    for (it = tags->tags; it <= &tags->tags[tags->num_tags - 1]; it++) {
+    for (it = tags->tags; it < &tags->tags[tags->num_tags]; it++) {
         if (!has_matches(it)) {
             continue;
         }
