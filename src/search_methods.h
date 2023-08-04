@@ -1,6 +1,7 @@
 #ifndef SEARCH_METHODS_H
 #define SEARCH_METHODS_H
 
+#include "bits.h"
 #include "debug_assert.h"
 #include "arguments.h"
 
@@ -8,15 +9,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(USE_UINT32_T)
-typedef uint32_t packed_t;
-#elif defined(USE_UINT16_T)
-typedef uint16_t packed_t;
-#elif defined(USE_UINT8_T)
-typedef uint8_t packed_t;
-#else
-typedef uint64_t packed_t;
-#endif
 
 typedef bool (*search_method_fp)(const char *, const char *, size_t);
 

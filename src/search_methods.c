@@ -9,11 +9,6 @@
 #include "limits.h"
 #include "settings.h"
 
-#define BITS (size_t) 8
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#define PACK(dst, a, b, offset) \
-    (dst) |= ((uint8_t) ((a) ^ (b)) != 0) << offset
-
 typedef int (*transform_fp)(int);
 
 static bool matches_pattern(const char *fname,
@@ -35,7 +30,7 @@ static bool matches_pattern(const char *fname,
                 return false;
             }
 
-            PACK(has_duplicate, view_fname, view_pattern, view);
+            PACK_CMP(has_duplicate, view_fname, view_pattern, view);
         }
 
         if (has_duplicate) {
@@ -74,7 +69,7 @@ static bool matches_pattern_reverse(const char *fname,
             const char view_fname = transform(cursor_fname[-view]);
             const char view_pattern = transform(cursor_pattern[-view]);
 
-            PACK(has_duplicate, view_fname, view_pattern, view);
+            PACK_CMP(has_duplicate, view_fname, view_pattern, view);
         }
 
         if (has_duplicate) {
