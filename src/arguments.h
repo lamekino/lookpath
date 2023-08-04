@@ -79,9 +79,13 @@ enum argument get_start(enum category catagory);
 enum argument get_end(enum category catagory);
 enum argument get_first(enum category category);
 enum argument get_last(enum category category);
+enum category get_catagory(enum argument a);
+
+enum argument validate_arg(const char *arg);
 
 int get_base_enum(enum argument bounded);
 
 bool is_category_member(enum argument a, enum category c);
 bool is_category(int c);
+bool is_bounded(enum argument a);
 #endif
